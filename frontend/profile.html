@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RESPAWN — Edit Profile</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .profile-wrap {
+      max-width: 580px;
+      margin: 3rem auto;
+      padding: 0 1.5rem 4rem;
+    }
+
+    .back-link {
+      display: inline-flex; align-items: center; gap: .4rem;
+      font-size: .78rem; font-weight: 700;
+      letter-spacing: .06em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 2rem;
+      transition: color .2s;
+    }
+    .back-link:hover { color: var(--text); }
+
+    /* Avatar preview area */
+    .avatar-section {
+      display: flex; align-items: center; gap: 1.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .avatar-preview {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #7c3aed, #ef4444);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.8rem; font-weight: 700; color: #fff;
+      flex-shrink: 0;
+      overflow: hidden;
+      border: 2px solid var(--border);
+    }
+    .avatar-preview img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+    .avatar-info .username {
+      font-size: 1.1rem; font-weight: 800; margin-bottom: .25rem;
+    }
+    .avatar-info .role-badge {
+      display: inline-block;
+      font-size: .65rem; font-weight: 800;
+      letter-spacing: .1em; text-transform: uppercase;
+      padding: .2rem .55rem; border-radius: 4px;
+      background: rgba(124,58,237,.2); color: #b08aff;
+    }
+    .avatar-info .member-since {
+      font-size: .75rem; color: var(--muted); margin-top: .4rem;
+    }
+
+    /* Profile card sections */
+    .profile-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.8rem;
+      margin-bottom: 1.5rem;
+    }
+    .profile-card__title {
+      font-size: .72rem; font-weight: 800;
+      letter-spacing: .1em; text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1.4rem;
+      padding-bottom: .8rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .field-group {
+      display: flex; flex-direction: column; gap: .4rem;
+      margin-bottom: 1.1rem;
+    }
+    .field-group:last-child { margin-bottom: 0; }
+    .field-group label {
+      font-size: .78rem; font-weight: 600;
+      letter-spacing: .05em; text-transform: uppercase;
+      color: var(--muted);
+    }
+    .field-group input {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: .75rem 1rem;
+      color: var(--text); font-size: .92rem;
+      transition: border-color .2s, box-shadow .2s;
+      outline: none;
+    }
+    .field-group input:focus {
+      border-color: #7c3aed;
+      box-shadow: 0 0 0 3px rgba(124,58,237,.15);
+    }
+    .field-group input:disabled {
+      opacity: .45; cursor: not-allowed;
+    }
+    .field-group .field-hint {
+      font-size: .72rem; color: var(--muted);
+    }
+
+    /* Avatar URL + presets */
+    .avatar-url-wrap { position: relative; }
+    .avatar-url-wrap input { padding-right: 3rem; }
+    .avatar-url-clear {
+      position: absolute; right: .75rem; top: 50%;
+      transform: translateY(-50%);
+      background: none; border: none;
+      color: var(--muted); cursor: pointer;
+      font-size: 1rem; line-height: 1;
+      transition: color .2s;
+    }
+    .avatar-url-clear:hover { color: var(--text); }
+
+    .preset-avatars {
+      display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .6rem;
+    }
+    .preset-btn {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      overflow: hidden;
+      transition: border-color .2s, transform .15s;
+      flex-shrink: 0;
+      padding: 0;
+      background: var(--surface2);
+    }
+    .preset-btn img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+    .preset-btn:hover { border-color: #a855f7; transform: scale(1.1); }
+    .preset-btn.active { border-color: #a855f7; }
+
+    /* Action buttons */
+    .btn-save {
+      width: 100%; margin-top: 1.5rem;
+      padding: .85rem;
+      background: linear-gradient(135deg, #7c3aed, #6d28d9);
+      border: none; border-radius: 10px;
+      color: #fff; font-size: .95rem; font-weight: 700;
+      letter-spacing: .04em; text-transform: uppercase;
+      cursor: pointer;
+      transition: opacity .2s, transform .15s, box-shadow .2s;
+      box-shadow: 0 4px 16px rgba(124,58,237,.35);
+    }
+    .btn-save:hover { opacity: .9; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(124,58,237,.5); }
+    .btn-save:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+    /* Messages */
+    .profile-msg {
+      padding: .7rem 1rem; border-radius: 8px;
+      font-size: .84rem; margin-bottom: 1rem;
+      display: none;
+    }
+    .profile-msg.err { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.3); color: #fca5a5; display: block; }
+    .profile-msg.ok  { background: rgba(34,197,94,.1);  border: 1px solid rgba(34,197,94,.3);  color: #86efac; display: block; }
+
+    /* Section heading */
+    .page-heading {
+      font-size: 1.8rem; font-weight: 900;
+      letter-spacing: -.5px; margin-bottom: .4rem;
+    }
+    .page-heading span {
+      background: linear-gradient(135deg, #a855f7, #ef4444);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .page-subheading {
+      font-size: .85rem; color: var(--muted); margin-bottom: 2rem;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav>
+  <a class="nav-logo" href="home.html">
+    <span class="controller-icon">🎮</span>
+    <span class="brand-text">RESPAWN</span>
+  </a>
+  <div class="nav-links" id="navLinks">
+    <a href="home.html">Home</a>
+    <a href="category.html?cat=PlayStation">PlayStation</a>
+    <a href="category.html?cat=Xbox">Xbox</a>
+    <a href="category.html?cat=Nintendo">Nintendo</a>
+    <a href="category.html?cat=PC">PC</a>
+    <a href="category.html?cat=eSports">eSports</a>
+    <a href="category.html?cat=Mobile">Mobile</a>
+  </div>
+  <div class="nav-right">
+    <div class="nav-user">
+      <div class="nav-avatar" id="navAvatar">?</div>
+      <span id="navUsername"></span>
+    </div>
+    <button class="btn-logout" id="logoutBtn">Logout</button>
+  </div>
+</nav>
+
+<div class="profile-wrap">
+
+  <a class="back-link" href="home.html">← Back to Home</a>
+
+  <div class="page-heading">Edit <span>Profile</span></div>
+  <div class="page-subheading">Update your email, password, and avatar. Your username cannot be changed.</div>
+
+  <!-- Avatar preview -->
+  <div class="avatar-section">
+    <div class="avatar-preview" id="avatarPreview">
+      <span id="avatarInitial">?</span>
+    </div>
+    <div class="avatar-info">
+      <div class="username" id="profileUsername">—</div>
+      <span class="role-badge" id="profileRole">user</span>
+      <div class="member-since" id="profileEmail"></div>
+    </div>
+  </div>
+
+  <!-- General info -->
+  <div class="profile-card">
+    <div class="profile-card__title">Account Info</div>
+
+    <div id="infoMsg" class="profile-msg"></div>
+
+    <div class="field-group">
+      <label>Username</label>
+      <input type="text" id="fieldUsername" disabled />
+      <span class="field-hint">Username cannot be changed.</span>
+    </div>
+
+    <div class="field-group">
+      <label>Email Address</label>
+      <input type="email" id="fieldEmail" placeholder="gamer@example.com" autocomplete="email" />
+    </div>
+
+    <div class="field-group">
+      <label>Avatar Image URL</label>
+      <div class="avatar-url-wrap">
+        <input type="url" id="fieldAvatar" placeholder="https://example.com/my-avatar.jpg" autocomplete="off" />
+        <button class="avatar-url-clear" id="clearAvatar" title="Clear avatar">✕</button>
+      </div>
+      <span class="field-hint">Paste any image URL, or pick a preset below.</span>
+      <div class="preset-avatars" id="presetAvatars"></div>
+    </div>
+
+    <button class="btn-save" id="saveInfoBtn">Save Changes</button>
+  </div>
+
+  <!-- Password change -->
+  <div class="profile-card">
+    <div class="profile-card__title">Change Password</div>
+
+    <div id="pwMsg" class="profile-msg"></div>
+
+    <div class="field-group">
+      <label>Current Password</label>
+      <input type="password" id="fieldCurrentPw" placeholder="••••••••" autocomplete="current-password" />
+    </div>
+    <div class="field-group">
+      <label>New Password <small style="font-weight:400;text-transform:none;">(min 6 chars)</small></label>
+      <input type="password" id="fieldNewPw" placeholder="••••••••" autocomplete="new-password" />
+    </div>
+    <div class="field-group">
+      <label>Confirm New Password</label>
+      <input type="password" id="fieldConfirmPw" placeholder="••••••••" autocomplete="new-password" />
+    </div>
+
+    <button class="btn-save" id="savePwBtn">Update Password</button>
+  </div>
+
+</div>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <a class="nav-logo" href="home.html">
+        <span class="controller-icon">🎮</span>
+        <span class="brand-text">RESPAWN</span>
+      </a>
+      <p>Your home for gaming news, reviews, and eSports coverage. Independent, passionate, always up to date.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Categories</h4>
+      <ul>
+        <li><a href="category.html?cat=PlayStation">PlayStation</a></li>
+        <li><a href="category.html?cat=Xbox">Xbox</a></li>
+        <li><a href="category.html?cat=Nintendo">Nintendo</a></li>
+        <li><a href="category.html?cat=PC">PC</a></li>
+        <li><a href="category.html?cat=eSports">eSports</a></li>
+        <li><a href="category.html?cat=Mobile">Mobile</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Site</h4>
+      <ul>
+        <li><a href="home.html">Home</a></li>
+        <li><a href="profile.html">My Profile</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>About</h4>
+      <ul>
+        <li><a href="#">About Us</a></li>
+        <li><a href="#">Contact</a></li>
+        <li><a href="#">Privacy Policy</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 RESPAWN News. All rights reserved.</span>
+    <div class="footer-socials">
+      <a href="#" title="Twitter / X">𝕏</a>
+      <a href="#" title="YouTube">▶</a>
+      <a href="#" title="Discord">💬</a>
+      <a href="#" title="Twitch">🎮</a>
+    </div>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+<script>
+  // ── Auth guard — redirect admin away ──────────────────────────────────────
+  const token = localStorage.getItem('respawn_token');
+  if (!token) window.location.replace('index.html');
+
+  const user = JSON.parse(localStorage.getItem('respawn_user') || '{}');
+  if (user.role === 'admin') window.location.replace('home.html');
+
+  // ── Preset avatar gallery (gaming-themed via picsum seeds) ────────────────
+  const PRESETS = [
+    { seed: 'gamer1',    label: 'Preset 1' },
+    { seed: 'gamer2',    label: 'Preset 2' },
+    { seed: 'gamer3',    label: 'Preset 3' },
+    { seed: 'neon4',     label: 'Preset 4' },
+    { seed: 'pixel5',    label: 'Preset 5' },
+    { seed: 'cyber6',    label: 'Preset 6' },
+    { seed: 'space7',    label: 'Preset 7' },
+    { seed: 'retro8',    label: 'Preset 8' },
+  ].map(p => ({ ...p, url: `https://picsum.photos/seed/${p.seed}/80/80` }));
+
+  const presetContainer = document.getElementById('presetAvatars');
+  PRESETS.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'preset-btn';
+    btn.title = p.label;
+    btn.innerHTML = `<img src="${p.url}" alt="${p.label}" loading="lazy" />`;
+    btn.addEventListener('click', () => {
+      document.getElementById('fieldAvatar').value = p.url;
+      updateAvatarPreview(p.url);
+      document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+    presetContainer.appendChild(btn);
+  });
+
+  // ── Avatar preview logic ──────────────────────────────────────────────────
+  function updateAvatarPreview(url) {
+    const wrap    = document.getElementById('avatarPreview');
+    const initial = document.getElementById('avatarInitial');
+    if (url && url.trim()) {
+      initial.style.display = 'none';
+      let img = wrap.querySelector('img');
+      if (!img) {
+        img = document.createElement('img');
+        img.alt = 'avatar';
+        wrap.appendChild(img);
+      }
+      img.src = url.trim();
+      img.onerror = () => { img.remove(); initial.style.display = ''; };
+    } else {
+      const img = wrap.querySelector('img');
+      if (img) img.remove();
+      initial.style.display = '';
+    }
+    // Also update navbar avatar
+    updateNavAvatar(user.username, url);
+  }
+
+  function updateNavAvatar(username, avatarUrl) {
+    const navAvatar = document.getElementById('navAvatar');
+    if (avatarUrl && avatarUrl.trim()) {
+      navAvatar.innerHTML = `<img src="${avatarUrl.trim()}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`;
+    } else {
+      navAvatar.innerHTML = (username || '?')[0].toUpperCase();
+    }
+  }
+
+  document.getElementById('fieldAvatar').addEventListener('input', e => {
+    updateAvatarPreview(e.target.value);
+    // Clear active preset if user typed manually
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  });
+
+  document.getElementById('clearAvatar').addEventListener('click', () => {
+    document.getElementById('fieldAvatar').value = '';
+    updateAvatarPreview('');
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  });
+
+  // ── Populate form from stored user ───────────────────────────────────────
+  function populateForm(u) {
+    document.getElementById('navAvatar').textContent   = (u.username || '?')[0].toUpperCase();
+    document.getElementById('navUsername').textContent = u.username || '';
+    document.getElementById('avatarInitial').textContent = (u.username || '?')[0].toUpperCase();
+    document.getElementById('profileUsername').textContent = u.username || '';
+    document.getElementById('profileRole').textContent     = u.role || 'user';
+    document.getElementById('profileEmail').textContent    = u.email || '';
+    document.getElementById('fieldUsername').value = u.username || '';
+    document.getElementById('fieldEmail').value    = u.email    || '';
+    document.getElementById('fieldAvatar').value   = u.avatar   || '';
+    if (u.avatar) {
+      updateAvatarPreview(u.avatar);
+      // Mark matching preset active
+      PRESETS.forEach((p, i) => {
+        if (p.url === u.avatar) {
+          presetContainer.children[i]?.classList.add('active');
+        }
+      });
+    }
+  }
+
+  // Load fresh profile from server
+  async function loadProfile() {
+    try {
+      const res  = await apiFetch('/api/me');
+      const data = await res.json();
+      if (data.user) {
+        // Merge avatar into stored user
+        const merged = { ...user, ...data.user };
+        localStorage.setItem('respawn_user', JSON.stringify(merged));
+        populateForm(merged);
+      }
+    } catch {
+      populateForm(user); // fall back to cached
+    }
+  }
+
+  loadProfile();
+
+  // ── Logout ────────────────────────────────────────────────────────────────
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    await apiFetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+    localStorage.clear();
+    window.location.replace('index.html');
+  });
+
+  // ── Save info (email + avatar) ────────────────────────────────────────────
+  document.getElementById('saveInfoBtn').addEventListener('click', async () => {
+    const msg   = document.getElementById('infoMsg');
+    const btn   = document.getElementById('saveInfoBtn');
+    const email  = document.getElementById('fieldEmail').value.trim();
+    const avatar = document.getElementById('fieldAvatar').value.trim();
+
+    msg.className = 'profile-msg';
+    if (!email) { msg.className = 'profile-msg err'; msg.textContent = 'Email is required.'; return; }
+
+    btn.disabled = true; btn.textContent = 'Saving…';
+    try {
+      const res  = await apiFetch('/api/me', {
+        method: 'PUT',
+        body: JSON.stringify({ email, avatar }),
+      });
+      const data = await res.json();
+      if (!res.ok) { msg.className = 'profile-msg err'; msg.textContent = data.error || 'Failed to save.'; return; }
+
+      const updated = { ...user, ...data.user };
+      localStorage.setItem('respawn_user', JSON.stringify(updated));
+      Object.assign(user, updated);
+      populateForm(updated);
+      msg.className = 'profile-msg ok';
+      msg.textContent = 'Profile updated successfully!';
+      setTimeout(() => { msg.className = 'profile-msg'; }, 3500);
+    } catch {
+      msg.className = 'profile-msg err'; msg.textContent = 'Could not connect to server.';
+    } finally {
+      btn.disabled = false; btn.textContent = 'Save Changes';
+    }
+  });
+
+  // ── Change password ───────────────────────────────────────────────────────
+  document.getElementById('savePwBtn').addEventListener('click', async () => {
+    const msg     = document.getElementById('pwMsg');
+    const btn     = document.getElementById('savePwBtn');
+    const curPw   = document.getElementById('fieldCurrentPw').value;
+    const newPw   = document.getElementById('fieldNewPw').value;
+    const confPw  = document.getElementById('fieldConfirmPw').value;
+
+    msg.className = 'profile-msg';
+    if (!curPw || !newPw || !confPw) { msg.className = 'profile-msg err'; msg.textContent = 'All password fields are required.'; return; }
+    if (newPw !== confPw)             { msg.className = 'profile-msg err'; msg.textContent = 'New passwords do not match.'; return; }
+    if (newPw.length < 6)             { msg.className = 'profile-msg err'; msg.textContent = 'New password must be at least 6 characters.'; return; }
+
+    btn.disabled = true; btn.textContent = 'Updating…';
+    try {
+      const res  = await apiFetch('/api/me', {
+        method: 'PUT',
+        body: JSON.stringify({ current_password: curPw, new_password: newPw }),
+      });
+      const data = await res.json();
+      if (!res.ok) { msg.className = 'profile-msg err'; msg.textContent = data.error || 'Failed to update password.'; return; }
+
+      document.getElementById('fieldCurrentPw').value = '';
+      document.getElementById('fieldNewPw').value     = '';
+      document.getElementById('fieldConfirmPw').value = '';
+      msg.className = 'profile-msg ok';
+      msg.textContent = 'Password changed successfully!';
+      setTimeout(() => { msg.className = 'profile-msg'; }, 3500);
+    } catch {
+      msg.className = 'profile-msg err'; msg.textContent = 'Could not connect to server.';
+    } finally {
+      btn.disabled = false; btn.textContent = 'Update Password';
+    }
+  });
+</script>
+
+</body>
+</html>

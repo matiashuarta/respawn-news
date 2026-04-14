@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RESPAWN — Login</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="auth-wrap">
+  <div class="auth-card">
+
+    <!-- Logo -->
+    <div class="auth-logo">
+      <span class="icon">🎮</span>
+      <h1>RESPAWN</h1>
+      <p>Your gaming news hub</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-tab="login">Login</button>
+      <button class="auth-tab"        data-tab="register">Register</button>
+    </div>
+
+    <!-- Error / Success banners -->
+    <div class="auth-error"   id="authError"></div>
+    <div class="auth-success" id="authSuccess"></div>
+
+    <!-- Login Form -->
+    <form class="auth-form visible" id="loginForm" autocomplete="on">
+      <div class="form-group">
+        <label for="loginEmail">Email</label>
+        <input id="loginEmail" type="email" placeholder="gamer@example.com" autocomplete="email" required />
+      </div>
+      <div class="form-group">
+        <label for="loginPassword">Password</label>
+        <input id="loginPassword" type="password" placeholder="••••••••" autocomplete="current-password" required />
+      </div>
+      <button class="btn-primary" type="submit" id="loginBtn">Sign In</button>
+    </form>
+
+    <!-- Register Form -->
+    <form class="auth-form" id="registerForm" autocomplete="on">
+      <div class="form-group">
+        <label for="regUsername">Username</label>
+        <input id="regUsername" type="text" placeholder="CoolGamer99" autocomplete="username" required />
+      </div>
+      <div class="form-group">
+        <label for="regEmail">Email</label>
+        <input id="regEmail" type="email" placeholder="gamer@example.com" autocomplete="email" required />
+      </div>
+      <div class="form-group">
+        <label for="regPassword">Password <small style="font-weight:400;text-transform:none;">(min 6 chars)</small></label>
+        <input id="regPassword" type="password" placeholder="••••••••" autocomplete="new-password" required />
+      </div>
+      <div class="form-group">
+        <label for="regPassword2">Confirm Password</label>
+        <input id="regPassword2" type="password" placeholder="••••••••" autocomplete="new-password" required />
+      </div>
+      <button class="btn-primary" type="submit" id="registerBtn">Create Account</button>
+    </form>
+
+    <!-- Admin hint -->
+    <div style="margin-top:1.5rem;padding:1rem;background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.2);border-radius:10px;font-size:.78rem;color:var(--muted);line-height:1.6;">
+      <strong style="color:#a855f7;display:block;margin-bottom:.3rem;">⚙️ Admin Access</strong>
+      URL: <code style="color:var(--text)">http://localhost:8765/admin.html</code><br>
+      Email: <code style="color:var(--text)">admin@respawn.gg</code> &nbsp;·&nbsp; Password: <code style="color:var(--text)">admin123</code>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const API = 'http://localhost:8765/api';
+
+  // ── Redirect if already logged in ──────────────────────────────────────────
+  if (localStorage.getItem('respawn_token')) {
+    window.location.replace('home.html');
+  }
+
+  // ── Tab switching ──────────────────────────────────────────────────────────
+  document.querySelectorAll('.auth-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('visible'));
+      tab.classList.add('active');
+      document.getElementById(tab.dataset.tab + 'Form').classList.add('visible');
+      clearMessages();
+    });
+  });
+
+  // ── UI helpers ─────────────────────────────────────────────────────────────
+  function showError(msg) {
+    const el = document.getElementById('authError');
+    el.textContent = msg; el.classList.add('visible');
+    document.getElementById('authSuccess').classList.remove('visible');
+  }
+  function showSuccess(msg) {
+    const el = document.getElementById('authSuccess');
+    el.textContent = msg; el.classList.add('visible');
+    document.getElementById('authError').classList.remove('visible');
+  }
+  function clearMessages() {
+    document.getElementById('authError').classList.remove('visible');
+    document.getElementById('authSuccess').classList.remove('visible');
+  }
+  function setLoading(btn, loading) {
+    btn.disabled = loading;
+    btn.textContent = loading ? 'Please wait…' : (btn.id === 'loginBtn' ? 'Sign In' : 'Create Account');
+  }
+
+  // ── Login ──────────────────────────────────────────────────────────────────
+  document.getElementById('loginForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    clearMessages();
+    const btn   = document.getElementById('loginBtn');
+    const email = document.getElementById('loginEmail').value.trim();
+    const pass  = document.getElementById('loginPassword').value;
+
+    setLoading(btn, true);
+    try {
+      const res  = await fetch(`${API}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: pass }),
+      });
+      const data = await res.json();
+      if (!res.ok) return showError(data.error || 'Login failed');
+      localStorage.setItem('respawn_token', data.token);
+      localStorage.setItem('respawn_user',  JSON.stringify(data.user));
+      showSuccess('Welcome back, ' + data.user.username + '! Redirecting…');
+      setTimeout(() => window.location.replace('home.html'), 900);
+    } catch {
+      showError('Cannot connect to server. Is the backend running?');
+    } finally {
+      setLoading(btn, false);
+    }
+  });
+
+  // ── Register ───────────────────────────────────────────────────────────────
+  document.getElementById('registerForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    clearMessages();
+    const btn  = document.getElementById('registerBtn');
+    const username = document.getElementById('regUsername').value.trim();
+    const email    = document.getElementById('regEmail').value.trim();
+    const pass     = document.getElementById('regPassword').value;
+    const pass2    = document.getElementById('regPassword2').value;
+
+    if (pass !== pass2) return showError('Passwords do not match');
+
+    setLoading(btn, true);
+    try {
+      const res  = await fetch(`${API}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, email, password: pass }),
+      });
+      const data = await res.json();
+      if (!res.ok) return showError(data.error || 'Registration failed');
+      localStorage.setItem('respawn_token', data.token);
+      localStorage.setItem('respawn_user',  JSON.stringify(data.user));
+      showSuccess('Account created! Welcome, ' + data.user.username + '! Redirecting…');
+      setTimeout(() => window.location.replace('home.html'), 900);
+    } catch {
+      showError('Cannot connect to server. Is the backend running?');
+    } finally {
+      setLoading(btn, false);
+    }
+  });
+</script>
+
+</body>
+</html>

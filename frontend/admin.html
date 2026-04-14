@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RESPAWN — Admin Panel</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* ── Admin layout ─────────────────────────────────────────── */
+    .admin-wrap {
+      min-height: 100vh;
+      background: var(--bg);
+    }
+
+    /* ── Admin topbar ─────────────────────────────────────────── */
+    .admin-topbar {
+      background: #0f0f0f;
+      border-bottom: 2px solid #a855f7;
+      padding: .85rem 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; position: sticky; top: 0; z-index: 100;
+    }
+    .admin-brand {
+      display: flex; align-items: center; gap: .6rem;
+      font-size: 1.1rem; font-weight: 900; letter-spacing: .05em;
+      text-decoration: none; color: #fff;
+    }
+    .admin-brand .badge {
+      background: #a855f7; color: #fff;
+      font-size: .65rem; font-weight: 700;
+      padding: .2rem .55rem; border-radius: 4px;
+      letter-spacing: .06em;
+    }
+    .admin-topbar-right {
+      display: flex; align-items: center; gap: 1rem;
+    }
+    .admin-topbar-right span {
+      font-size: .85rem; color: var(--muted);
+    }
+    .btn-back {
+      font-size: .8rem; font-weight: 700; color: var(--muted);
+      background: var(--surface); border: 1px solid var(--border);
+      padding: .45rem .9rem; border-radius: 6px; cursor: pointer;
+      text-decoration: none; transition: color .15s, border-color .15s;
+    }
+    .btn-back:hover { color: #fff; border-color: #555; }
+    .btn-logout-sm {
+      font-size: .8rem; font-weight: 700; color: #ef4444;
+      background: transparent; border: 1px solid #ef4444;
+      padding: .45rem .9rem; border-radius: 6px; cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-logout-sm:hover { background: rgba(239,68,68,.12); }
+
+    /* ── Admin body ───────────────────────────────────────────── */
+    .admin-body {
+      max-width: 1240px; margin: 0 auto; padding: 2rem 2rem 4rem;
+    }
+
+    /* ── Stats bar ────────────────────────────────────────────── */
+    .stats-bar {
+      display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px; padding: 1rem 1.5rem;
+      min-width: 130px; flex: 1;
+    }
+    .stat-num { font-size: 2rem; font-weight: 900; color: #a855f7; line-height: 1; }
+    .stat-label { font-size: .75rem; color: var(--muted); margin-top: .25rem;
+                  text-transform: uppercase; letter-spacing: .06em; }
+
+    /* ── Section header ───────────────────────────────────────── */
+    .admin-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1.25rem; flex-wrap: wrap; gap: .75rem;
+    }
+    .admin-title {
+      font-size: 1.3rem; font-weight: 900; letter-spacing: -.3px;
+    }
+    .btn-add {
+      background: #a855f7; color: #fff; border: none;
+      padding: .6rem 1.25rem; border-radius: 8px;
+      font-size: .85rem; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; gap: .4rem;
+      transition: background .15s;
+    }
+    .btn-add:hover { background: #9333ea; }
+
+    /* ── Search + filter bar ──────────────────────────────────── */
+    .admin-filters {
+      display: flex; gap: .75rem; margin-bottom: 1.25rem; flex-wrap: wrap;
+    }
+    .admin-search {
+      flex: 1; min-width: 180px;
+      background: var(--surface); border: 1px solid var(--border);
+      color: #fff; border-radius: 8px; padding: .55rem 1rem;
+      font-size: .875rem; outline: none;
+    }
+    .admin-search:focus { border-color: #a855f7; }
+    .admin-cat-select {
+      background: var(--surface); border: 1px solid var(--border);
+      color: #fff; border-radius: 8px; padding: .55rem .9rem;
+      font-size: .875rem; outline: none; cursor: pointer;
+    }
+    .admin-cat-select:focus { border-color: #a855f7; }
+
+    /* ── Articles table ───────────────────────────────────────── */
+    .articles-table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden;
+    }
+    .articles-table {
+      width: 100%; border-collapse: collapse;
+      font-size: .85rem;
+    }
+    .articles-table thead { background: #111; }
+    .articles-table th {
+      padding: .85rem 1rem; text-align: left;
+      font-size: .72rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .07em;
+      color: var(--muted); border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .articles-table td {
+      padding: .8rem 1rem; border-bottom: 1px solid #1e1e1e;
+      vertical-align: middle;
+    }
+    .articles-table tr:last-child td { border-bottom: none; }
+    .articles-table tr:hover td { background: rgba(255,255,255,.025); }
+
+    .col-img { width: 56px; }
+    .col-img img { width: 52px; height: 38px; object-fit: cover; border-radius: 5px; display: block; }
+    .col-headline { max-width: 320px; }
+    .col-headline strong { display: block; line-height: 1.35; margin-bottom: .2rem; }
+    .col-headline span { font-size: .75rem; color: var(--muted); }
+    .col-cat { white-space: nowrap; }
+    .col-score { white-space: nowrap; text-align: center; }
+    .col-featured { text-align: center; }
+    .col-actions { white-space: nowrap; text-align: right; }
+
+    .feat-badge {
+      display: inline-block;
+      background: rgba(168,85,247,.2); color: #a855f7;
+      font-size: .7rem; font-weight: 700; padding: .2rem .5rem;
+      border-radius: 4px; letter-spacing: .04em;
+    }
+    .score-chip {
+      background: rgba(250,204,21,.15); color: #fbbf24;
+      font-size: .75rem; font-weight: 700; padding: .15rem .45rem;
+      border-radius: 4px;
+    }
+    .btn-edit, .btn-del {
+      padding: .38rem .75rem; border-radius: 6px;
+      font-size: .78rem; font-weight: 700; cursor: pointer; border: none;
+    }
+    .btn-edit {
+      background: rgba(168,85,247,.18); color: #a855f7;
+      margin-right: .35rem;
+      transition: background .15s;
+    }
+    .btn-edit:hover { background: rgba(168,85,247,.35); }
+    .btn-del {
+      background: rgba(239,68,68,.15); color: #ef4444;
+      transition: background .15s;
+    }
+    .btn-del:hover { background: rgba(239,68,68,.3); }
+
+    .table-empty {
+      text-align: center; padding: 3rem; color: var(--muted); font-size: .95rem;
+    }
+
+    /* ── Pagination ───────────────────────────────────────────── */
+    .pagination {
+      display: flex; justify-content: flex-end; align-items: center;
+      gap: .5rem; margin-top: 1rem; font-size: .82rem;
+    }
+    .page-btn {
+      background: var(--surface); border: 1px solid var(--border);
+      color: #fff; padding: .35rem .75rem; border-radius: 6px;
+      cursor: pointer; font-size: .8rem; transition: border-color .15s;
+    }
+    .page-btn:hover:not(:disabled) { border-color: #a855f7; }
+    .page-btn:disabled { opacity: .35; cursor: not-allowed; }
+    .page-btn.active { background: #a855f7; border-color: #a855f7; }
+    .page-info { color: var(--muted); }
+
+    /* ── Modal overlay ────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.75);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 999; opacity: 0; pointer-events: none;
+      transition: opacity .2s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: auto; }
+
+    .modal {
+      background: #141414;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      width: min(680px, 96vw);
+      max-height: 90vh; overflow-y: auto;
+      padding: 2rem;
+      transform: translateY(20px);
+      transition: transform .2s;
+    }
+    .modal-overlay.open .modal { transform: translateY(0); }
+
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+    .modal-title { font-size: 1.15rem; font-weight: 900; }
+    .modal-close {
+      background: none; border: none; color: var(--muted);
+      font-size: 1.5rem; cursor: pointer; line-height: 1;
+      padding: .1rem .4rem;
+    }
+    .modal-close:hover { color: #fff; }
+
+    /* ── Form inside modal ────────────────────────────────────── */
+    .form-row {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .form-row.full { grid-template-columns: 1fr; }
+    .form-group label {
+      display: block; font-size: .75rem; font-weight: 700;
+      color: var(--muted); text-transform: uppercase;
+      letter-spacing: .06em; margin-bottom: .4rem;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%; background: #0e0e0e;
+      border: 1px solid var(--border);
+      color: #fff; border-radius: 8px;
+      padding: .6rem .85rem; font-size: .875rem;
+      outline: none; box-sizing: border-box;
+      font-family: inherit;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus { border-color: #a855f7; }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+    .form-group select { cursor: pointer; }
+
+    .form-check {
+      display: flex; align-items: center; gap: .5rem;
+      margin-top: .5rem;
+    }
+    .form-check input { width: auto; margin: 0; }
+    .form-check label {
+      font-size: .85rem; color: #ccc;
+      text-transform: none; letter-spacing: 0; margin: 0;
+    }
+
+    /* Image preview inside form */
+    .img-preview-wrap {
+      margin-top: .5rem; border-radius: 8px; overflow: hidden;
+      height: 90px; background: #0e0e0e;
+      border: 1px solid var(--border);
+    }
+    .img-preview-wrap img {
+      width: 100%; height: 100%; object-fit: cover;
+      display: block; transition: opacity .2s;
+    }
+
+    .modal-footer {
+      display: flex; justify-content: flex-end; gap: .75rem;
+      margin-top: 1.75rem;
+    }
+    .btn-cancel {
+      background: var(--surface); color: var(--muted);
+      border: 1px solid var(--border);
+      padding: .6rem 1.25rem; border-radius: 8px;
+      font-size: .875rem; font-weight: 700; cursor: pointer;
+    }
+    .btn-cancel:hover { color: #fff; }
+    .btn-save {
+      background: #a855f7; color: #fff; border: none;
+      padding: .6rem 1.5rem; border-radius: 8px;
+      font-size: .875rem; font-weight: 700; cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-save:hover { background: #9333ea; }
+    .btn-save:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* ── Delete confirm modal ─────────────────────────────────── */
+    .del-modal {
+      background: #141414; border: 1px solid var(--border);
+      border-radius: 14px; width: min(420px, 94vw);
+      padding: 2rem; text-align: center;
+    }
+    .del-icon { font-size: 2.5rem; margin-bottom: .75rem; }
+    .del-modal h3 { font-size: 1.1rem; margin-bottom: .5rem; }
+    .del-modal p { color: var(--muted); font-size: .875rem; margin-bottom: 1.5rem; }
+    .del-modal-btns { display: flex; gap: .75rem; justify-content: center; }
+    .btn-confirm-del {
+      background: #ef4444; color: #fff; border: none;
+      padding: .6rem 1.5rem; border-radius: 8px;
+      font-size: .875rem; font-weight: 700; cursor: pointer;
+    }
+    .btn-confirm-del:hover { background: #dc2626; }
+
+    /* ── Toast notification ───────────────────────────────────── */
+    .toast {
+      position: fixed; bottom: 2rem; right: 2rem;
+      background: #1e1e1e; border: 1px solid var(--border);
+      border-left: 4px solid #a855f7;
+      color: #fff; padding: .85rem 1.25rem;
+      border-radius: 10px; font-size: .875rem; font-weight: 600;
+      z-index: 9999; transform: translateY(100px);
+      opacity: 0; transition: transform .3s, opacity .3s;
+      max-width: 320px;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.error { border-left-color: #ef4444; }
+    .toast.success { border-left-color: #22c55e; }
+  </style>
+</head>
+<body>
+<div class="admin-wrap">
+
+  <!-- ── Top bar ───────────────────────────────────────────────── -->
+  <div class="admin-topbar">
+    <a href="home.html" class="admin-brand">
+      🎮 RESPAWN <span class="badge">ADMIN</span>
+    </a>
+    <div class="admin-topbar-right">
+      <span id="adminWelcome"></span>
+      <a href="home.html" class="btn-back">← Back to Site</a>
+      <button class="btn-logout-sm" id="logoutBtn">Logout</button>
+    </div>
+  </div>
+
+  <!-- ── Body ──────────────────────────────────────────────────── -->
+  <div class="admin-body">
+
+    <!-- Stats -->
+    <div class="stats-bar" id="statsBar">
+      <div class="stat-card"><div class="stat-num" id="statTotal">—</div><div class="stat-label">Total Articles</div></div>
+      <div class="stat-card"><div class="stat-num" id="statFeatured">—</div><div class="stat-label">Featured</div></div>
+      <div class="stat-card"><div class="stat-num" id="statReviews">—</div><div class="stat-label">Reviews</div></div>
+      <div class="stat-card"><div class="stat-num" id="statCategories">—</div><div class="stat-label">Categories</div></div>
+    </div>
+
+    <!-- Table header -->
+    <div class="admin-header">
+      <div class="admin-title">Articles Management</div>
+      <button class="btn-add" id="addBtn">＋ New Article</button>
+    </div>
+
+    <!-- Filters -->
+    <div class="admin-filters">
+      <input class="admin-search" id="searchInput" placeholder="🔍  Search articles…" />
+      <select class="admin-cat-select" id="catFilter">
+        <option value="">All Categories</option>
+        <option>PlayStation</option>
+        <option>Xbox</option>
+        <option>Nintendo</option>
+        <option>PC</option>
+        <option>eSports</option>
+        <option>Mobile</option>
+      </select>
+    </div>
+
+    <!-- Table -->
+    <div class="articles-table-wrap">
+      <table class="articles-table">
+        <thead>
+          <tr>
+            <th class="col-img">Img</th>
+            <th class="col-headline">Headline</th>
+            <th class="col-cat">Category</th>
+            <th class="col-score">Score</th>
+            <th class="col-featured">Featured</th>
+            <th class="col-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="articlesBody">
+          <tr><td colspan="6" class="table-empty">Loading articles…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" id="pagination"></div>
+
+  </div><!-- /admin-body -->
+</div><!-- /admin-wrap -->
+
+<!-- ══════════════════════════════════════════════════════════
+     Edit / Create Modal
+══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">New Article</div>
+      <button class="modal-close" id="modalClose">×</button>
+    </div>
+
+    <form id="articleForm" autocomplete="off">
+      <input type="hidden" id="fieldId" />
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Category *</label>
+          <select id="fieldCategory" required>
+            <option value="">— Select —</option>
+            <option>PlayStation</option>
+            <option>Xbox</option>
+            <option>Nintendo</option>
+            <option>PC</option>
+            <option>eSports</option>
+            <option>Mobile</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Tag *</label>
+          <input id="fieldTag" type="text" placeholder="e.g. PS5, Review, Xbox Series X" required />
+        </div>
+      </div>
+
+      <div class="form-row full">
+        <div class="form-group">
+          <label>Headline *</label>
+          <input id="fieldHeadline" type="text" placeholder="Article title…" required />
+        </div>
+      </div>
+
+      <div class="form-row full">
+        <div class="form-group">
+          <label>Summary *</label>
+          <textarea id="fieldSummary" placeholder="Short article summary…" required></textarea>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Author *</label>
+          <input id="fieldAuthor" type="text" placeholder="Author name" required />
+        </div>
+        <div class="form-group">
+          <label>Date *</label>
+          <input id="fieldDate" type="text" placeholder="e.g. Apr 12, 2026" required />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Score (optional, 0–10)</label>
+          <input id="fieldScore" type="number" step="0.1" min="0" max="10" placeholder="Leave blank if N/A" />
+        </div>
+        <div class="form-group" style="display:flex;flex-direction:column;justify-content:flex-end;">
+          <div class="form-check">
+            <input id="fieldFeatured" type="checkbox" />
+            <label for="fieldFeatured">Featured article (shown in hero)</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row full">
+        <div class="form-group">
+          <label>Image URL *</label>
+          <input id="fieldImage" type="url" placeholder="https://…" required />
+          <div class="img-preview-wrap" id="imgPreviewWrap">
+            <img id="imgPreview" src="" alt="" />
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row full">
+        <div class="form-group">
+          <label>Article Body</label>
+          <textarea id="fieldBody" placeholder="Full article text… (separate paragraphs with a blank line)" style="min-height:160px"></textarea>
+        </div>
+      </div>
+    </form>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" id="modalCancel">Cancel</button>
+      <button class="btn-save" id="savBtn">Save Article</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     Delete Confirm Modal
+══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="delModal">
+  <div class="del-modal">
+    <div class="del-icon">🗑️</div>
+    <h3>Delete Article?</h3>
+    <p id="delModalMsg">This action cannot be undone.</p>
+    <div class="del-modal-btns">
+      <button class="btn-cancel" id="delCancel">Cancel</button>
+      <button class="btn-confirm-del" id="delConfirm">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Toast ──────────────────────────────────────────────── -->
+<div class="toast" id="toast"></div>
+
+<!-- ─────────────────────────────────────────────────────────
+     Script
+───────────────────────────────────────────────────────── -->
+<script>
+const API = 'http://localhost:8765';
+const PER_PAGE = 15;
+
+// ── Auth guard — must be logged in AND role=admin ──────────────────────────
+const token = localStorage.getItem('respawn_token');
+const user  = JSON.parse(localStorage.getItem('respawn_user') || '{}');
+
+if (!token || user.role !== 'admin') {
+  alert('Access denied. Admin role required.');
+  window.location.replace('index.html');
+}
+
+document.getElementById('adminWelcome').textContent = 'Welcome, ' + (user.username || 'Admin');
+
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  await fetch(API + '/api/auth/logout', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + token }
+  }).catch(() => {});
+  localStorage.clear();
+  window.location.replace('index.html');
+});
+
+// ── API helpers ────────────────────────────────────────────────────────────
+async function apiReq(path, options = {}) {
+  return fetch(API + path, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + token,
+      ...(options.headers || {}),
+    },
+  });
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+let _toastTimer = null;
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+// ── State ──────────────────────────────────────────────────────────────────
+let allArticles = [];     // full list from API
+let filtered    = [];     // after search/cat filter
+let currentPage = 1;
+
+// ── Load articles ──────────────────────────────────────────────────────────
+async function loadArticles() {
+  try {
+    const res  = await apiReq('/api/admin/news');
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed');
+    allArticles = data.articles || [];
+    applyFilters();
+    updateStats();
+  } catch (e) {
+    document.getElementById('articlesBody').innerHTML =
+      `<tr><td colspan="6" class="table-empty" style="color:#ef4444">Error: ${esc(e.message)}</td></tr>`;
+  }
+}
+
+// ── Stats ──────────────────────────────────────────────────────────────────
+function updateStats() {
+  document.getElementById('statTotal').textContent    = allArticles.length;
+  document.getElementById('statFeatured').textContent = allArticles.filter(a => a.featured).length;
+  document.getElementById('statReviews').textContent  = allArticles.filter(a => a.score !== null && a.score !== undefined).length;
+  const cats = new Set(allArticles.map(a => a.category));
+  document.getElementById('statCategories').textContent = cats.size;
+}
+
+// ── Filters ────────────────────────────────────────────────────────────────
+function applyFilters() {
+  const q   = document.getElementById('searchInput').value.trim().toLowerCase();
+  const cat = document.getElementById('catFilter').value;
+
+  filtered = allArticles.filter(a => {
+    const matchCat = !cat || a.category === cat;
+    const matchQ   = !q || a.headline.toLowerCase().includes(q) ||
+                          a.author.toLowerCase().includes(q) ||
+                          a.tag.toLowerCase().includes(q);
+    return matchCat && matchQ;
+  });
+
+  currentPage = 1;
+  renderTable();
+  renderPagination();
+}
+
+document.getElementById('searchInput').addEventListener('input', applyFilters);
+document.getElementById('catFilter').addEventListener('change', applyFilters);
+
+// ── Table render ───────────────────────────────────────────────────────────
+function renderTable() {
+  const tbody = document.getElementById('articlesBody');
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="table-empty">No articles found.</td></tr>';
+    return;
+  }
+
+  const start  = (currentPage - 1) * PER_PAGE;
+  const paged  = filtered.slice(start, start + PER_PAGE);
+
+  tbody.innerHTML = paged.map(a => `
+    <tr>
+      <td class="col-img">
+        <img src="${esc(a.image)}" alt="" onerror="this.style.opacity=.2" />
+      </td>
+      <td class="col-headline">
+        <strong>${esc(a.headline)}</strong>
+        <span>${esc(a.author)} · ${esc(a.date)}</span>
+      </td>
+      <td class="col-cat">
+        <span class="tile__tag ${esc(a.tag_class)}">${esc(a.category)}</span>
+      </td>
+      <td class="col-score">
+        ${a.score !== null && a.score !== undefined
+          ? `<span class="score-chip">⭐ ${Number(a.score).toFixed(1)}</span>`
+          : '<span style="color:#444">—</span>'}
+      </td>
+      <td class="col-featured">
+        ${a.featured ? '<span class="feat-badge">★ Featured</span>' : '<span style="color:#333">—</span>'}
+      </td>
+      <td class="col-actions">
+        <button class="btn-edit" onclick="openEdit(${a.id})">✏️ Edit</button>
+        <button class="btn-del"  onclick="openDelete(${a.id})">🗑️ Del</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// ── Pagination ─────────────────────────────────────────────────────────────
+function renderPagination() {
+  const total = Math.ceil(filtered.length / PER_PAGE);
+  const pag   = document.getElementById('pagination');
+
+  if (total <= 1) { pag.innerHTML = ''; return; }
+
+  let html = `<span class="page-info">${filtered.length} articles</span> `;
+  html += `<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button> `;
+
+  for (let i = 1; i <= total; i++) {
+    html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</button> `;
+  }
+  html += `<button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage===total?'disabled':''}>›</button>`;
+  pag.innerHTML = html;
+}
+
+function goPage(n) {
+  const total = Math.ceil(filtered.length / PER_PAGE);
+  if (n < 1 || n > total) return;
+  currentPage = n;
+  renderTable();
+  renderPagination();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── Escape HTML ────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Modal open/close ───────────────────────────────────────────────────────
+const editModal = document.getElementById('editModal');
+
+function openModal() { editModal.classList.add('open'); }
+function closeModal() {
+  editModal.classList.remove('open');
+  document.getElementById('articleForm').reset();
+  document.getElementById('fieldId').value = '';
+  document.getElementById('imgPreview').src = '';
+}
+
+document.getElementById('modalClose').addEventListener('click',  closeModal);
+document.getElementById('modalCancel').addEventListener('click', closeModal);
+editModal.addEventListener('click', e => { if (e.target === editModal) closeModal(); });
+
+// ── Open create ────────────────────────────────────────────────────────────
+document.getElementById('addBtn').addEventListener('click', () => {
+  document.getElementById('modalTitle').textContent = '✨ New Article';
+  document.getElementById('fieldDate').value = new Date().toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+  openModal();
+});
+
+// ── Open edit ──────────────────────────────────────────────────────────────
+function openEdit(id) {
+  const a = allArticles.find(x => x.id === id);
+  if (!a) return;
+  document.getElementById('modalTitle').textContent  = '✏️ Edit Article';
+  document.getElementById('fieldId').value           = a.id;
+  document.getElementById('fieldCategory').value     = a.category;
+  document.getElementById('fieldTag').value          = a.tag;
+  document.getElementById('fieldHeadline').value     = a.headline;
+  document.getElementById('fieldSummary').value      = a.summary;
+  document.getElementById('fieldAuthor').value       = a.author;
+  document.getElementById('fieldDate').value         = a.date;
+  document.getElementById('fieldScore').value        = a.score ?? '';
+  document.getElementById('fieldFeatured').checked   = !!a.featured;
+  document.getElementById('fieldImage').value        = a.image;
+  document.getElementById('imgPreview').src          = a.image;
+  document.getElementById('fieldBody').value         = a.body || '';
+  openModal();
+}
+
+// ── Live image preview ─────────────────────────────────────────────────────
+document.getElementById('fieldImage').addEventListener('input', e => {
+  document.getElementById('imgPreview').src = e.target.value;
+});
+
+// ── Save (create or update) ────────────────────────────────────────────────
+document.getElementById('savBtn').addEventListener('click', async () => {
+  const form = document.getElementById('articleForm');
+  if (!form.reportValidity()) return;
+
+  const id       = document.getElementById('fieldId').value;
+  const category = document.getElementById('fieldCategory').value;
+  const scoreVal = document.getElementById('fieldScore').value.trim();
+
+  const payload = {
+    category,
+    tag:      document.getElementById('fieldTag').value.trim(),
+    headline: document.getElementById('fieldHeadline').value.trim(),
+    summary:  document.getElementById('fieldSummary').value.trim(),
+    author:   document.getElementById('fieldAuthor').value.trim(),
+    date:     document.getElementById('fieldDate').value.trim(),
+    image:    document.getElementById('fieldImage').value.trim(),
+    score:    scoreVal !== '' ? parseFloat(scoreVal) : null,
+    featured: document.getElementById('fieldFeatured').checked,
+    body:     document.getElementById('fieldBody').value.trim(),
+  };
+
+  const btn = document.getElementById('savBtn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  try {
+    let res;
+    if (id) {
+      res = await apiReq(`/api/admin/news/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+    } else {
+      res = await apiReq('/api/admin/news', { method: 'POST', body: JSON.stringify(payload) });
+    }
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Save failed');
+
+    closeModal();
+    await loadArticles();
+    showToast(id ? '✅ Article updated successfully' : '✅ Article created successfully', 'success');
+  } catch (e) {
+    showToast('❌ ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Save Article';
+  }
+});
+
+// ── Delete flow ────────────────────────────────────────────────────────────
+const delModal = document.getElementById('delModal');
+let pendingDeleteId = null;
+
+function openDelete(id) {
+  const a = allArticles.find(x => x.id === id);
+  pendingDeleteId = id;
+  document.getElementById('delModalMsg').textContent =
+    `"${a ? a.headline : 'this article'}" will be permanently removed.`;
+  delModal.classList.add('open');
+}
+
+document.getElementById('delCancel').addEventListener('click', () => {
+  delModal.classList.remove('open');
+  pendingDeleteId = null;
+});
+delModal.addEventListener('click', e => {
+  if (e.target === delModal) { delModal.classList.remove('open'); pendingDeleteId = null; }
+});
+
+document.getElementById('delConfirm').addEventListener('click', async () => {
+  if (!pendingDeleteId) return;
+  const btn = document.getElementById('delConfirm');
+  btn.disabled = true; btn.textContent = 'Deleting…';
+  try {
+    const res = await apiReq(`/api/admin/news/${pendingDeleteId}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Delete failed');
+    delModal.classList.remove('open');
+    pendingDeleteId = null;
+    await loadArticles();
+    showToast('🗑️ Article deleted', 'success');
+  } catch (e) {
+    showToast('❌ ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Delete';
+  }
+});
+
+// ── Boot ───────────────────────────────────────────────────────────────────
+loadArticles();
+</script>
+
+</body>
+</html>
