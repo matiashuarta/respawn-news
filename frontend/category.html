@@ -112,6 +112,7 @@
     <a href="category.html?cat=PC"          id="navPC">PC</a>
     <a href="category.html?cat=eSports"     id="navESports">eSports</a>
     <a href="category.html?cat=Mobile"      id="navMobile">Mobile</a>
+    <a href="forum.html">Forum</a>
   </div>
   <div class="nav-right">
     <div class="nav-user">
@@ -249,7 +250,10 @@
     try {
       const res  = await apiFetch(`/api/news?category=${encodeURIComponent(cat)}`);
       const data = await res.json();
-      const articles = data.articles || [];
+      // Sort by date descending (newest first)
+      const articles = (data.articles || []).sort((a, b) =>
+        new Date(b.date) - new Date(a.date)
+      );
 
       document.getElementById('catCount').textContent =
         `${articles.length} article${articles.length !== 1 ? 's' : ''}`;

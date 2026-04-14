@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RESPAWN Forum — Category</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* ── Breadcrumb ──────────────────────────────────────── */
+    .breadcrumb {
+      padding: .75rem 2rem;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      font-size: .75rem; color: var(--muted);
+      display: flex; align-items: center; gap: .4rem;
+    }
+    .breadcrumb a { color: #a855f7; }
+    .breadcrumb a:hover { text-decoration: underline; }
+
+    /* ── Category hero ───────────────────────────────────── */
+    .cat-hero-banner {
+      padding: 2rem 2rem 1.6rem;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+    .cat-hero-inner {
+      max-width: 1100px; margin: 0 auto;
+      display: flex; align-items: center; gap: 1.2rem;
+    }
+    .cat-hero-icon {
+      width: 60px; height: 60px;
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.8rem; flex-shrink: 0;
+    }
+    .cat-hero-text h1 {
+      font-size: 1.5rem; font-weight: 900; letter-spacing: -.3px;
+      margin-bottom: .3rem;
+    }
+    .cat-hero-text p { font-size: .85rem; color: var(--muted); margin-bottom: .4rem; }
+    .cat-hero-stats { font-size: .75rem; color: var(--muted); }
+    .cat-hero-stats strong { color: var(--text); }
+
+    /* ── Main layout ─────────────────────────────────────── */
+    .cat-layout {
+      max-width: 1100px; margin: 0 auto;
+      padding: 1.8rem 2rem;
+    }
+
+    /* ── Toolbar ─────────────────────────────────────────── */
+    .topics-toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; margin-bottom: 1.1rem; flex-wrap: wrap;
+    }
+    .sort-pills {
+      display: flex; gap: .4rem;
+    }
+    .sort-pill {
+      padding: .3rem .85rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: .75rem; font-weight: 700;
+      color: var(--muted); cursor: pointer;
+      background: none;
+      transition: color .15s, border-color .15s, background .15s;
+    }
+    .sort-pill:hover { color: var(--text); border-color: #555; }
+    .sort-pill.active {
+      background: rgba(124,58,237,.15);
+      border-color: rgba(124,58,237,.5);
+      color: #c084fc;
+    }
+
+    /* ── Topic list ──────────────────────────────────────── */
+    .topic-list { display: flex; flex-direction: column; gap: .5rem; }
+
+    .topic-row {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      display: flex; align-items: center; gap: 1rem;
+      padding: .9rem 1.2rem;
+      text-decoration: none; color: inherit;
+      transition: border-color .18s, transform .12s;
+    }
+    .topic-row:hover {
+      border-color: rgba(124,58,237,.4);
+      transform: translateX(2px);
+    }
+    .topic-row.is-pinned {
+      border-color: rgba(124,58,237,.25);
+      background: linear-gradient(90deg, rgba(124,58,237,.04) 0%, var(--surface) 100%);
+    }
+
+    .topic-icon {
+      width: 38px; height: 38px; flex-shrink: 0;
+      border-radius: 10px;
+      background: var(--surface2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .95rem;
+    }
+    .topic-main { flex: 1; min-width: 0; }
+    .topic-badges {
+      display: flex; align-items: center; gap: .35rem;
+      margin-bottom: .25rem;
+    }
+    .topic-badge {
+      padding: .1rem .4rem; border-radius: 4px;
+      font-size: .6rem; font-weight: 800;
+      letter-spacing: .06em; text-transform: uppercase;
+    }
+    .badge-pinned  { background: rgba(124,58,237,.18); color: #a855f7; }
+    .badge-locked  { background: rgba(239,68,68,.14);  color: #ef4444; }
+    .topic-title {
+      font-size: .9rem; font-weight: 700; line-height: 1.3;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      margin-bottom: .25rem;
+    }
+    .topic-meta {
+      font-size: .7rem; color: var(--muted);
+      display: flex; align-items: center; gap: .5rem;
+    }
+    .topic-meta .dot { opacity: .4; }
+
+    .topic-stats {
+      display: flex; gap: 1.4rem; flex-shrink: 0;
+      text-align: center;
+    }
+    .topic-stat { font-size: .72rem; color: var(--muted); line-height: 1.5; }
+    .topic-stat strong { display: block; color: var(--text); font-size: .85rem; }
+
+    /* ── Empty state ─────────────────────────────────────── */
+    .empty-state {
+      text-align: center; padding: 4rem 1rem;
+      color: var(--muted); font-size: .9rem;
+    }
+    .empty-state .empty-icon { font-size: 3rem; display: block; margin-bottom: 1rem; }
+
+    /* ── New topic button ────────────────────────────────── */
+    .btn-new-topic {
+      display: inline-flex; align-items: center; gap: .45rem;
+      padding: .5rem 1.1rem;
+      background: linear-gradient(135deg, #7c3aed, #6d28d9);
+      border: none; border-radius: 9px;
+      color: #fff; font-size: .8rem; font-weight: 700;
+      letter-spacing: .04em; text-transform: uppercase;
+      cursor: pointer;
+      transition: opacity .2s, transform .15s;
+    }
+    .btn-new-topic:hover { opacity: .88; transform: translateY(-1px); }
+
+    /* ── New topic modal ─────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,.65);
+      backdrop-filter: blur(4px);
+      display: none; align-items: center; justify-content: center;
+      padding: 1rem;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 18px; padding: 1.8rem;
+      width: 100%; max-width: 540px;
+      box-shadow: 0 24px 60px rgba(0,0,0,.5);
+    }
+    .modal-box h2 { font-size: 1.1rem; font-weight: 800; margin-bottom: 1.2rem; }
+    .modal-field { margin-bottom: 1rem; }
+    .modal-field label { display: block; font-size: .78rem; font-weight: 700; color: var(--muted); margin-bottom: .4rem; text-transform: uppercase; letter-spacing: .06em; }
+    .modal-field input,
+    .modal-field textarea {
+      width: 100%; background: var(--surface2);
+      border: 1px solid var(--border); border-radius: 9px;
+      padding: .65rem .9rem; color: var(--text);
+      font-size: .88rem; font-family: inherit; outline: none;
+      transition: border-color .2s;
+    }
+    .modal-field textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
+    .modal-field input:focus,
+    .modal-field textarea:focus { border-color: #7c3aed; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: .7rem; margin-top: 1.2rem; }
+    .btn-cancel { padding: .5rem 1.1rem; background: none; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); font-size: .82rem; cursor: pointer; }
+    .btn-cancel:hover { border-color: var(--muted); color: var(--text); }
+    .btn-submit { padding: .5rem 1.3rem; background: linear-gradient(135deg, #7c3aed, #6d28d9); border: none; border-radius: 8px; color: #fff; font-size: .82rem; font-weight: 700; cursor: pointer; }
+    .btn-submit:hover { opacity: .88; }
+    .btn-submit:disabled { opacity: .4; cursor: not-allowed; }
+
+    @media (max-width: 680px) {
+      .cat-layout { padding: 1.2rem 1rem; }
+      .topic-stats { display: none; }
+      .cat-hero-banner { padding: 1.2rem 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav id="navbar">
+  <a class="nav-logo" href="home.html">
+    <span class="controller-icon">🎮</span>
+    <span class="brand-text">RESPAWN</span>
+  </a>
+  <div class="nav-links" id="navLinks">
+    <a href="home.html">Home</a>
+    <a href="category.html?cat=PlayStation">PlayStation</a>
+    <a href="category.html?cat=Xbox">Xbox</a>
+    <a href="category.html?cat=Nintendo">Nintendo</a>
+    <a href="category.html?cat=PC">PC</a>
+    <a href="category.html?cat=eSports">eSports</a>
+    <a href="category.html?cat=Mobile">Mobile</a>
+    <a href="forum.html" class="active">Forum</a>
+  </div>
+  <div class="nav-right">
+    <div class="nav-user">
+      <div class="nav-avatar" id="navAvatar">?</div>
+      <span id="navUsername"></span>
+    </div>
+    <a href="admin.html" class="btn-admin" id="adminLink" style="display:none">⚙️ Admin</a>
+    <button class="btn-logout" id="logoutBtn">Logout</button>
+  </div>
+</nav>
+
+<!-- Breadcrumb -->
+<div class="breadcrumb">
+  <a href="forum.html">Forum</a>
+  <span>›</span>
+  <span id="bcCategory" style="color:var(--text)">Loading…</span>
+</div>
+
+<!-- Category hero -->
+<div class="cat-hero-banner">
+  <div class="cat-hero-inner">
+    <div class="cat-hero-icon" id="catIcon"></div>
+    <div class="cat-hero-text">
+      <h1 id="catName">Loading…</h1>
+      <p id="catDesc"></p>
+      <div class="cat-hero-stats">
+        <strong id="catTopicCount">—</strong> topics &nbsp;·&nbsp;
+        <strong id="catPostCount">—</strong> posts
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main content -->
+<div class="cat-layout">
+  <div class="topics-toolbar">
+    <div class="sort-pills">
+      <button class="sort-pill active" id="pill-newest"   onclick="setSort('newest')">🕐 Newest</button>
+      <button class="sort-pill"        id="pill-popular"  onclick="setSort('popular')">🔥 Most Popular</button>
+      <button class="sort-pill"        id="pill-activity" onclick="setSort('activity')">💬 Most Active</button>
+    </div>
+    <button class="btn-new-topic" onclick="openModal()">✏️ New Topic</button>
+  </div>
+
+  <div class="topic-list" id="topicList">
+    <div class="empty-state"><span class="empty-icon">⏳</span>Loading topics…</div>
+  </div>
+</div>
+
+<!-- New Topic Modal -->
+<div class="modal-overlay" id="newTopicModal">
+  <div class="modal-box">
+    <h2>✏️ New Topic</h2>
+    <div class="modal-field">
+      <label>Title</label>
+      <input type="text" id="newTopicTitle" placeholder="What's your topic about?" maxlength="200" />
+    </div>
+    <div class="modal-field">
+      <label>Your Post</label>
+      <textarea id="newTopicBody" placeholder="Share your thoughts…" maxlength="5000"></textarea>
+    </div>
+    <div id="newTopicError" style="color:#ef4444;font-size:.8rem;margin-top:.5rem;display:none"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-submit" id="newTopicSubmit" onclick="submitTopic()">Post Topic</button>
+    </div>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <a class="nav-logo" href="home.html">
+        <span class="controller-icon">🎮</span>
+        <span class="brand-text">RESPAWN</span>
+      </a>
+      <p>Your home for gaming news, reviews, and eSports coverage.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Site</h4>
+      <ul>
+        <li><a href="home.html">Home</a></li>
+        <li><a href="forum.html">Forum</a></li>
+        <li><a href="profile.html">My Profile</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>About</h4>
+      <ul>
+        <li><a href="#">About Us</a></li>
+        <li><a href="#">Privacy Policy</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 RESPAWN News. All rights reserved.</span>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+<script>
+const params  = new URLSearchParams(location.search);
+const catSlug = params.get('cat') || '';
+let user      = null;
+let category  = null;
+let topics    = [];
+let sort      = 'newest';
+
+async function init() {
+  const token = localStorage.getItem('respawn_token');
+  if (!token) { window.location.href = 'index.html'; return; }
+
+  try {
+    const r = await apiFetch('/api/me');
+    const d = await r.json();
+    user = d.user;
+    document.getElementById('navUsername').textContent = user.username;
+    const av = document.getElementById('navAvatar');
+    if (user.avatar) {
+      av.innerHTML = `<img src="${escHtml(user.avatar)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentElement.textContent='${escHtml(user.username[0].toUpperCase())}'">`;
+    } else {
+      av.textContent = user.username[0].toUpperCase();
+    }
+    if (user.role === 'admin') document.getElementById('adminLink').style.display = '';
+  } catch { window.location.href = 'index.html'; return; }
+
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    await apiFetch('/api/auth/logout', { method: 'POST' });
+    localStorage.removeItem('respawn_token');
+    window.location.href = 'index.html';
+  });
+
+  if (!catSlug) { window.location.href = 'forum.html'; return; }
+  await loadCategory();
+}
+
+async function loadCategory() {
+  try {
+    const [catRes, topicsRes] = await Promise.all([
+      apiFetch('/api/forum/categories'),
+      apiFetch(`/api/forum/topics?category=${encodeURIComponent(catSlug)}`),
+    ]);
+    const catData    = await catRes.json();
+    const topicsData = await topicsRes.json();
+
+    const allCats = catData.categories || [];
+    category = allCats.find(c => c.slug === catSlug);
+
+    if (!category) {
+      document.getElementById('catName').textContent = 'Category not found';
+      document.getElementById('topicList').innerHTML =
+        '<div class="empty-state"><span class="empty-icon">🔍</span>This category does not exist.</div>';
+      return;
+    }
+
+    topics = topicsData.topics || [];
+
+    // Breadcrumb + header
+    document.title = `RESPAWN Forum — ${category.name}`;
+    document.getElementById('bcCategory').textContent = category.name;
+    document.getElementById('catName').textContent    = category.name;
+    document.getElementById('catDesc').textContent    = category.description;
+
+    const iconEl = document.getElementById('catIcon');
+    iconEl.textContent = category.icon;
+    iconEl.style.background = `${category.color}22`;
+
+    // Count posts across all topics in this category
+    const totalPosts = topics.reduce((sum, t) => sum + (t.post_count || 0), 0);
+    document.getElementById('catTopicCount').textContent = topics.length;
+    document.getElementById('catPostCount').textContent  = totalPosts;
+
+    renderTopics();
+  } catch (e) {
+    document.getElementById('topicList').innerHTML =
+      '<div class="empty-state"><span class="empty-icon">⚠️</span>Could not load topics.</div>';
+  }
+}
+
+function setSort(s) {
+  sort = s;
+  document.querySelectorAll('.sort-pill').forEach(p => p.classList.remove('active'));
+  document.getElementById(`pill-${s}`).classList.add('active');
+  renderTopics();
+}
+
+function getSorted() {
+  const pinned    = topics.filter(t => t.pinned);
+  const unpinned  = topics.filter(t => !t.pinned);
+
+  const sortFn = {
+    newest:   (a, b) => new Date(b.created)      - new Date(a.created),
+    popular:  (a, b) => (b.view_count || 0)       - (a.view_count || 0),
+    activity: (a, b) => (b.post_count || 0)        - (a.post_count || 0),
+  }[sort] || (() => 0);
+
+  unpinned.sort(sortFn);
+  return [...pinned, ...unpinned];
+}
+
+function timeSince(dateStr) {
+  if (!dateStr) return '';
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1)   return 'just now';
+  if (m < 60)  return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24)  return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  if (d < 30)  return `${d}d ago`;
+  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function renderTopics() {
+  const list   = document.getElementById('topicList');
+  const sorted = getSorted();
+
+  if (!sorted.length) {
+    list.innerHTML = `
+      <div class="empty-state">
+        <span class="empty-icon">${escHtml(category ? category.icon : '💬')}</span>
+        No topics yet — be the first to start a discussion!
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = sorted.map(t => {
+    const pinnedBadge = t.pinned ? '<span class="topic-badge badge-pinned">📌 Pinned</span>' : '';
+    const lockedBadge = t.locked ? '<span class="topic-badge badge-locked">🔒 Locked</span>' : '';
+    const hasBadges   = t.pinned || t.locked;
+    const topicIcon   = t.locked ? '🔒' : t.pinned ? '📌' : '💬';
+
+    return `
+      <a class="topic-row${t.pinned ? ' is-pinned' : ''}" href="forum-topic.html?id=${t.id}">
+        <div class="topic-icon">${topicIcon}</div>
+        <div class="topic-main">
+          ${hasBadges ? `<div class="topic-badges">${pinnedBadge}${lockedBadge}</div>` : ''}
+          <div class="topic-title">${escHtml(t.title)}</div>
+          <div class="topic-meta">
+            <span>${escHtml(t.username)}</span>
+            <span class="dot">·</span>
+            <span>${timeSince(t.created)}</span>
+          </div>
+        </div>
+        <div class="topic-stats">
+          <div class="topic-stat"><strong>${t.post_count || 0}</strong>posts</div>
+          <div class="topic-stat"><strong>${t.view_count || 0}</strong>views</div>
+        </div>
+      </a>`;
+  }).join('');
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────────────
+function openModal() {
+  document.getElementById('newTopicModal').classList.add('open');
+  document.getElementById('newTopicTitle').focus();
+}
+function closeModal() {
+  document.getElementById('newTopicModal').classList.remove('open');
+  document.getElementById('newTopicError').style.display = 'none';
+}
+document.getElementById('newTopicModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal();
+});
+
+async function submitTopic() {
+  const title = document.getElementById('newTopicTitle').value.trim();
+  const body  = document.getElementById('newTopicBody').value.trim();
+  const errEl = document.getElementById('newTopicError');
+  const btn   = document.getElementById('newTopicSubmit');
+
+  errEl.style.display = 'none';
+  if (!title) { errEl.textContent = 'Title is required.'; errEl.style.display = ''; return; }
+  if (!body)  { errEl.textContent = 'Post body is required.'; errEl.style.display = ''; return; }
+
+  btn.disabled = true; btn.textContent = 'Posting…';
+  try {
+    const r = await apiFetch('/api/forum/topics', {
+      method: 'POST',
+      body: JSON.stringify({ category: catSlug, title, body }),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Failed');
+    window.location.href = `forum-topic.html?id=${d.topic.id}`;
+  } catch (e) {
+    errEl.textContent = e.message || 'Could not create topic.';
+    errEl.style.display = '';
+    btn.disabled = false; btn.textContent = 'Post Topic';
+  }
+}
+
+init();
+</script>
+</body>
+</html>

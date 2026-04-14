@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s http://localhost:8765/api/forum/topics/hot -H 'Authorization: Bearer f23ba6e16d7828398d483512202bbee3054fe7bcce683b076af443f964f3ee38')",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); ts=d.get\\('topics',[]\\); print\\(f'Hot topics: {len\\(ts\\)}'\\); [print\\(f'  [{t[\\\\\"hot_score\\\\\"]}] {t[\\\\\"title\\\\\"]} \\({t[\\\\\"category_name\\\\\"]}\\)'\\) for t in ts]\")",
+      "Bash(curl -s http://localhost:8765/api/forum/me/rank -H 'Authorization: Bearer f23ba6e16d7828398d483512202bbee3054fe7bcce683b076af443f964f3ee38')",
+      "Bash(curl -s http://localhost:8765/api/forum/topics/1 -H 'Authorization: Bearer f23ba6e16d7828398d483512202bbee3054fe7bcce683b076af443f964f3ee38')",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); posts=d.get\\('posts',[]\\); print\\(f'Posts: {len\\(posts\\)}'\\); [print\\(f'  {p[\\\\\"username\\\\\"]} rank_posts={p.get\\(\\\\\"user_post_count\\\\\",\\\\\"MISSING\\\\\"\\)}'\\) for p in posts[:3]]\")",
+      "Bash(python -c \"import db; db.init_db\\(\\)\")",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); ts=d.get\\('topics',[]\\); print\\(f'General topics: {len\\(ts\\)}'\\); [print\\(f'  - {t[\\\\\"title\\\\\"][:60]}'\\) for t in ts]\")",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); arts=d.get\\('articles',[]\\); print\\(f'Related: {len\\(arts\\)} articles'\\); [print\\(f'  {a[\\\\\"headline\\\\\"][:50]} | {a[\\\\\"date\\\\\"]}'\\) for a in arts[:4]]\")",
+      "Bash(python -c ':*)",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); ts=d.get\\('topics',[]\\); print\\(f'General: {len\\(ts\\)} topics'\\); [print\\(f'  [{\\\\\"P\\\\\" if t[\\\\\"pinned\\\\\"] else \\\\\" \\\\\"}] {t[\\\\\"title\\\\\"][:65]}'\\) for t in ts]\")",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); ts=d.get\\('topics',[]\\); [print\\(f'  {t[\\\\\"title\\\\\"][:55]}'\\) for t in ts]; print\\(f'Total general topics: {len\\(ts\\)}'\\)\")"
+    ]
+  }
+}

@@ -149,7 +149,7 @@ class RespawnHandler(BaseHTTPRequestHandler):
                 return
             return json_response(self, {"articles": db.get_featured_articles()})
 
-        # /api/news/{id}/related  — same category, excluding this article, max 4
+        # /api/news/{id}/related  — same category, excluding this article, max 10
         m = re.match(r"^/api/news/(\d+)/related$", path)
         if m:
             user = require_auth(self)
@@ -162,7 +162,7 @@ class RespawnHandler(BaseHTTPRequestHandler):
             related = [
                 a for a in db.get_articles_by_category(article["category"])
                 if a["id"] != article_id
-            ][:4]
+            ][:10]
             return json_response(self, {"articles": related})
 
         # /api/news/{id}/comments  (includes per-user votes if ?user_id= provided)
@@ -213,6 +213,69 @@ class RespawnHandler(BaseHTTPRequestHandler):
                 return
             articles = db.get_all_articles()
             return json_response(self, {"articles": articles, "total": len(articles)})
+
+        # /api/forum/categories
+        if path == "/api/forum/categories":
+            user = require_auth(self)
+            if not user:
+                return
+            return json_response(self, {"categories": db.get_forum_categories()})
+
+        # /api/forum/stats
+        if path == "/api/forum/stats":
+            user = require_auth(self)
+            if not user:
+                return
+            return json_response(self, db.get_forum_stats())
+
+        # /api/forum/topics/hot  (must come before /api/forum/topics/{id})
+        if path == "/api/forum/topics/hot":
+            user = require_auth(self)
+            if not user:
+                return
+            return json_response(self, {"topics": db.get_hot_forum_topics()})
+
+        # /api/forum/me/rank  — current user's forum post count + rank label
+        if path == "/api/forum/me/rank":
+            user = require_auth(self)
+            if not user:
+                return
+            count = db.get_user_forum_post_count(user["id"])
+            if count >= 200: rank = "Legend"
+            elif count >= 50: rank = "Veteran"
+            elif count >= 10: rank = "Regular"
+            elif count >= 1:  rank = "Recruit"
+            else:              rank = "Lurker"
+            return json_response(self, {"post_count": count, "rank": rank})
+
+        # /api/forum/rules  — returns the ID of the rules topic
+        if path == "/api/forum/rules":
+            user = require_auth(self)
+            if not user:
+                return
+            topic_id = db.get_forum_rules_topic_id()
+            return json_response(self, {"topic_id": topic_id})
+
+        # /api/forum/topics  (all or ?category=slug)
+        if path == "/api/forum/topics":
+            user = require_auth(self)
+            if not user:
+                return
+            cat   = params.get("category", [None])[0]
+            page  = int(params.get("page", ["1"])[0])
+            topics, total = db.get_forum_topics(cat, page)
+            return json_response(self, {"topics": topics, "total": total})
+
+        # /api/forum/topics/{id}
+        m = re.match(r"^/api/forum/topics/(\d+)$", path)
+        if m:
+            user = require_auth(self)
+            if not user:
+                return
+            topic, posts = db.get_forum_topic(int(m.group(1)))
+            if not topic:
+                return error_response(self, "Topic not found", 404)
+            return json_response(self, {"topic": topic, "posts": posts})
 
         # Static files
         self._serve_static(path)
@@ -339,6 +402,52 @@ class RespawnHandler(BaseHTTPRequestHandler):
                 return error_response(self, err)
             return json_response(self, {"article": article}, 201)
 
+        # POST /api/forum/topics — create new topic
+        if path == "/api/forum/topics":
+            user = require_auth(self)
+            if not user:
+                return
+            cat_slug = (body.get("category") or "").strip()
+            title    = (body.get("title")    or "").strip()
+            txt      = (body.get("body")     or "").strip()
+            if not cat_slug or not title or not txt:
+                return error_response(self, "category, title and body are required")
+            if len(title) > 200:
+                return error_response(self, "Title must be 200 characters or less")
+            if len(txt) > 5000:
+                return error_response(self, "Post must be 5000 characters or less")
+            topic, err = db.create_forum_topic(cat_slug, title, txt, user["id"], user["username"])
+            if err:
+                return error_response(self, err)
+            return json_response(self, {"topic": topic}, 201)
+
+        # POST /api/forum/topics/{id}/posts — reply in a topic
+        m = re.match(r"^/api/forum/topics/(\d+)/posts$", path)
+        if m:
+            user = require_auth(self)
+            if not user:
+                return
+            txt = (body.get("body") or "").strip()
+            if not txt:
+                return error_response(self, "Post body is required")
+            if len(txt) > 5000:
+                return error_response(self, "Post must be 5000 characters or less")
+            post, err = db.create_forum_post(int(m.group(1)), txt, user["id"], user["username"])
+            if err:
+                return error_response(self, err)
+            return json_response(self, {"post": post}, 201)
+
+        # POST /api/forum/posts/{id}/like
+        m = re.match(r"^/api/forum/posts/(\d+)/like$", path)
+        if m:
+            user = require_auth(self)
+            if not user:
+                return
+            result, err = db.toggle_forum_post_like(int(m.group(1)), user["id"])
+            if err:
+                return error_response(self, err)
+            return json_response(self, result)
+
         error_response(self, "Not found", 404)
 
     # ── PUT ───────────────────────────────────────────────────────────────────
@@ -433,6 +542,17 @@ class RespawnHandler(BaseHTTPRequestHandler):
             if not ok:
                 return error_response(self, err, 404)
             return json_response(self, {"ok": True, "deleted_id": comment_id})
+
+        # DELETE /api/forum/posts/{id}
+        m = re.match(r"^/api/forum/posts/(\d+)$", path)
+        if m:
+            user = require_auth(self)
+            if not user:
+                return
+            err = db.delete_forum_post(int(m.group(1)), user["id"], user.get("role") == "admin")
+            if err:
+                return error_response(self, err, 404 if "not found" in err.lower() else 403)
+            return json_response(self, {"ok": True})
 
         error_response(self, "Not found", 404)
 

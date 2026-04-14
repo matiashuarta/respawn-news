@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RESPAWN Forum — Topic</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* ── Breadcrumb ──────────────────────────────────────── */
+    .breadcrumb {
+      padding: .75rem 2rem;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      font-size: .75rem; color: var(--muted);
+      display: flex; align-items: center; gap: .4rem;
+    }
+    .breadcrumb a { color: #a855f7; }
+    .breadcrumb a:hover { text-decoration: underline; }
+
+    /* ── Layout ──────────────────────────────────────────── */
+    .topic-layout {
+      max-width: 1100px; margin: 0 auto;
+      padding: 1.8rem 2rem;
+      display: grid;
+      grid-template-columns: 1fr 260px;
+      gap: 1.6rem;
+      align-items: start;
+    }
+
+    /* ── Topic header ────────────────────────────────────── */
+    .topic-header {
+      margin-bottom: 1.5rem;
+    }
+    .topic-category-badge {
+      display: inline-flex; align-items: center; gap: .3rem;
+      font-size: .68rem; font-weight: 800;
+      letter-spacing: .08em; text-transform: uppercase;
+      color: #a855f7; margin-bottom: .6rem;
+    }
+    .topic-title {
+      font-size: 1.5rem; font-weight: 900;
+      letter-spacing: -.3px; line-height: 1.25;
+      margin-bottom: .5rem;
+    }
+    .topic-meta {
+      display: flex; align-items: center; gap: 1rem;
+      font-size: .75rem; color: var(--muted);
+      flex-wrap: wrap;
+    }
+    .topic-locked-badge {
+      display: inline-flex; align-items: center; gap: .3rem;
+      padding: .18rem .55rem; border-radius: 6px;
+      background: rgba(239,68,68,.15); color: #ef4444;
+      font-size: .68rem; font-weight: 700;
+    }
+    .topic-pinned-badge {
+      display: inline-flex; align-items: center; gap: .3rem;
+      padding: .18rem .55rem; border-radius: 6px;
+      background: rgba(124,58,237,.18); color: #a855f7;
+      font-size: .68rem; font-weight: 700;
+    }
+
+    /* ── Posts ───────────────────────────────────────────── */
+    .post-list { display: flex; flex-direction: column; gap: .9rem; }
+
+    .post-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color .18s;
+    }
+    .post-card.is-op {
+      border-color: rgba(124,58,237,.3);
+      background: linear-gradient(180deg, rgba(124,58,237,.04) 0%, var(--surface) 60px);
+    }
+
+    .post-inner {
+      display: flex; gap: 0;
+    }
+
+    /* Left author strip */
+    .post-author {
+      width: 120px; flex-shrink: 0;
+      padding: 1.1rem .9rem;
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; align-items: center;
+      gap: .5rem; text-align: center;
+    }
+    .post-avatar {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #7c3aed, #ef4444);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; font-weight: 800; color: #fff;
+      overflow: hidden;
+    }
+    .post-username {
+      font-size: .78rem; font-weight: 800;
+      word-break: break-word; line-height: 1.2;
+    }
+    .post-rank-badge {
+      padding: .15rem .4rem; border-radius: 5px;
+      font-size: .6rem; font-weight: 800;
+      letter-spacing: .05em; text-transform: uppercase;
+    }
+    .post-count-label { font-size: .65rem; color: var(--muted); }
+    .post-join-label  { font-size: .62rem; color: var(--muted); line-height: 1.4; }
+
+    /* Right content */
+    .post-content { flex: 1; min-width: 0; padding: 1.1rem 1.2rem; }
+    .post-content-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: .7rem;
+      font-size: .7rem; color: var(--muted);
+    }
+    .post-number { font-weight: 700; color: #a855f7; }
+    .post-body {
+      font-size: .88rem; line-height: 1.7; color: #d4d4e0;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .post-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: .9rem; padding-top: .65rem;
+      border-top: 1px solid var(--border);
+    }
+    .post-like-btn {
+      display: inline-flex; align-items: center; gap: .35rem;
+      padding: .3rem .75rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: .75rem; font-weight: 600;
+      color: var(--muted); cursor: pointer;
+      transition: color .18s, background .18s, border-color .18s;
+    }
+    .post-like-btn:hover, .post-like-btn.liked {
+      color: #a855f7; border-color: rgba(124,58,237,.4);
+      background: rgba(124,58,237,.08);
+    }
+    .post-delete-btn {
+      background: none; border: none;
+      color: var(--muted); font-size: .72rem;
+      cursor: pointer; padding: .25rem .5rem; border-radius: 5px;
+      transition: color .15s, background .15s;
+    }
+    .post-delete-btn:hover { color: #ef4444; background: rgba(239,68,68,.1); }
+
+    /* ── Reply form ──────────────────────────────────────── */
+    .reply-form-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.2rem 1.4rem;
+      margin-top: 1rem;
+    }
+    .reply-form-card h3 {
+      font-size: .78rem; font-weight: 800;
+      text-transform: uppercase; letter-spacing: .08em;
+      color: var(--muted); margin-bottom: .9rem;
+    }
+    .reply-form-card textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: .75rem 1rem;
+      color: var(--text); font-size: .88rem;
+      font-family: inherit; line-height: 1.55;
+      resize: vertical; min-height: 100px; outline: none;
+      transition: border-color .2s;
+    }
+    .reply-form-card textarea:focus { border-color: #7c3aed; }
+    .reply-form-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-top: .6rem;
+    }
+    .char-count { font-size: .68rem; color: var(--muted); }
+    .btn-post-reply {
+      padding: .45rem 1.2rem;
+      background: linear-gradient(135deg, #7c3aed, #6d28d9);
+      border: none; border-radius: 8px;
+      color: #fff; font-size: .8rem; font-weight: 700;
+      cursor: pointer; transition: opacity .2s;
+    }
+    .btn-post-reply:hover { opacity: .88; }
+    .btn-post-reply:disabled { opacity: .4; cursor: not-allowed; }
+    .locked-notice {
+      text-align: center; padding: 1rem;
+      color: var(--muted); font-size: .85rem;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); margin-top: 1rem;
+    }
+
+    /* ── Sidebar ─────────────────────────────────────────── */
+    .topic-sidebar { display: flex; flex-direction: column; gap: 1.1rem; }
+    .sidebar-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.1rem;
+    }
+    .sidebar-card__title {
+      font-size: .68rem; font-weight: 800;
+      letter-spacing: .1em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: .8rem;
+    }
+    .sidebar-info-row {
+      display: flex; justify-content: space-between;
+      font-size: .78rem; padding: .4rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-info-row:last-child { border-bottom: none; }
+    .sidebar-info-row span:first-child { color: var(--muted); }
+    .sidebar-info-row span:last-child { font-weight: 700; }
+
+    /* Rank badge reuse */
+    .rank-badge {
+      padding: .18rem .55rem; border-radius: 6px;
+      font-size: .65rem; font-weight: 800;
+      letter-spacing: .05em; text-transform: uppercase;
+    }
+    .rank-lurker   { background: rgba(107,107,128,.2); color: #9ca3af; }
+    .rank-recruit  { background: rgba(59,130,246,.2);  color: #60a5fa; }
+    .rank-regular  { background: rgba(34,197,94,.2);   color: #4ade80; }
+    .rank-veteran  { background: rgba(168,85,247,.2);  color: #c084fc; }
+    .rank-legend   { background: rgba(251,191,36,.2);  color: #fbbf24; }
+
+    /* State placeholders */
+    .state-box {
+      padding: 3rem 1rem; text-align: center; color: var(--muted);
+    }
+
+    /* ── Responsive ──────────────────────────────────────── */
+    @media (max-width: 860px) {
+      .topic-layout { grid-template-columns: 1fr; }
+      .topic-sidebar { order: -1; display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
+      .post-author { width: 90px; }
+    }
+    @media (max-width: 560px) {
+      .topic-layout { padding: 1rem; }
+      .post-author { display: none; }
+      .topic-sidebar { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav id="navbar">
+  <a class="nav-logo" href="home.html">
+    <span class="controller-icon">🎮</span>
+    <span class="brand-text">RESPAWN</span>
+  </a>
+  <div class="nav-links" id="navLinks">
+    <a href="home.html">Home</a>
+    <a href="category.html?cat=PlayStation">PlayStation</a>
+    <a href="category.html?cat=Xbox">Xbox</a>
+    <a href="category.html?cat=Nintendo">Nintendo</a>
+    <a href="category.html?cat=PC">PC</a>
+    <a href="category.html?cat=eSports">eSports</a>
+    <a href="category.html?cat=Mobile">Mobile</a>
+    <a href="forum.html" class="active">Forum</a>
+  </div>
+  <div class="nav-right">
+    <div class="nav-user">
+      <div class="nav-avatar" id="navAvatar">?</div>
+      <span id="navUsername"></span>
+    </div>
+    <a href="admin.html" class="btn-admin" id="adminLink" style="display:none">⚙️ Admin</a>
+    <button class="btn-logout" id="logoutBtn">Logout</button>
+  </div>
+</nav>
+
+<!-- Breadcrumb -->
+<div class="breadcrumb">
+  <a href="forum.html">Forum</a>
+  <span>›</span>
+  <a id="bcCategory" href="forum.html" style="color:#a855f7">…</a>
+  <span>›</span>
+  <span id="bcTitle" style="color:var(--text);max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">…</span>
+</div>
+
+<!-- Main layout -->
+<div class="topic-layout">
+
+  <!-- Posts column -->
+  <main>
+    <div id="loadingState" class="state-box">Loading thread…</div>
+    <div id="errorState" class="state-box" style="display:none;color:#ef4444">Could not load topic.</div>
+
+    <div id="topicContent" style="display:none">
+      <!-- Header -->
+      <div class="topic-header">
+        <div class="topic-category-badge" id="topicCatBadge"></div>
+        <h1 class="topic-title" id="topicTitle"></h1>
+        <div class="topic-meta" id="topicMeta"></div>
+      </div>
+
+      <!-- Posts -->
+      <div class="post-list" id="postList"></div>
+
+      <!-- Reply form / locked notice -->
+      <div id="replyArea"></div>
+    </div>
+  </main>
+
+  <!-- Sidebar -->
+  <aside class="topic-sidebar">
+    <div class="sidebar-card">
+      <div class="sidebar-card__title">Thread Info</div>
+      <div class="sidebar-info-row"><span>Category</span><span id="sbCat">—</span></div>
+      <div class="sidebar-info-row"><span>Started by</span><span id="sbAuthor">—</span></div>
+      <div class="sidebar-info-row"><span>Replies</span><span id="sbReplies">—</span></div>
+      <div class="sidebar-info-row"><span>Views</span><span id="sbViews">—</span></div>
+    </div>
+    <div class="sidebar-card">
+      <div class="sidebar-card__title">Navigation</div>
+      <div style="display:flex;flex-direction:column;gap:.5rem">
+        <a href="forum.html" style="font-size:.8rem;color:#a855f7;font-weight:700">← Back to Forum</a>
+        <a id="catLink" href="forum.html" style="font-size:.8rem;color:var(--muted)">Browse category</a>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <a class="nav-logo" href="home.html">
+        <span class="controller-icon">🎮</span>
+        <span class="brand-text">RESPAWN</span>
+      </a>
+      <p>Your home for gaming news, reviews, and eSports coverage.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Site</h4>
+      <ul>
+        <li><a href="home.html">Home</a></li>
+        <li><a href="forum.html">Forum</a></li>
+        <li><a href="profile.html">My Profile</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>About</h4>
+      <ul>
+        <li><a href="#">About Us</a></li>
+        <li><a href="#">Privacy Policy</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 RESPAWN News. All rights reserved.</span>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+<script>
+const params = new URLSearchParams(location.search);
+const topicId  = params.get('id') ? parseInt(params.get('id')) : null;
+let user   = null;
+let topic  = null;
+let posts  = [];
+let likedPosts = new Set();
+
+function getRank(postCount) {
+  if (postCount >= 200) return { label: 'Legend',  cls: 'rank-legend'  };
+  if (postCount >=  50) return { label: 'Veteran', cls: 'rank-veteran' };
+  if (postCount >=  10) return { label: 'Regular', cls: 'rank-regular' };
+  if (postCount >=   1) return { label: 'Recruit', cls: 'rank-recruit' };
+  return                       { label: 'Lurker',  cls: 'rank-lurker'  };
+}
+
+async function init() {
+  const token = localStorage.getItem('respawn_token');
+  if (!token) { window.location.href = 'index.html'; return; }
+
+  try {
+    const r = await apiFetch('/api/me');
+    const d = await r.json();
+    user = d.user;
+    document.getElementById('navUsername').textContent = user.username;
+    const av = document.getElementById('navAvatar');
+    if (user.avatar) {
+      av.innerHTML = `<img src="${escHtml(user.avatar)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentElement.textContent='${escHtml(user.username[0].toUpperCase())}'">`;
+    } else {
+      av.textContent = user.username[0].toUpperCase();
+    }
+    if (user.role === 'admin') document.getElementById('adminLink').style.display = '';
+  } catch { window.location.href = 'index.html'; return; }
+
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    await apiFetch('/api/auth/logout', { method: 'POST' });
+    localStorage.removeItem('respawn_token');
+    window.location.href = 'index.html';
+  });
+
+  if (!topicId) {
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('errorState').style.display = '';
+    return;
+  }
+  await loadTopic();
+}
+
+async function loadTopic() {
+  try {
+    const r = await apiFetch(`/api/forum/topics/${topicId}`);
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Not found');
+    topic = d.topic;
+    posts = d.posts || [];
+    renderTopic();
+  } catch {
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('errorState').style.display = '';
+  }
+}
+
+function renderTopic() {
+  // Breadcrumb
+  const bcCat = document.getElementById('bcCategory');
+  bcCat.textContent = topic.category_name;
+  bcCat.href = `forum-category.html?cat=${encodeURIComponent(topic.category_slug)}`;
+  document.getElementById('bcTitle').textContent = topic.title;
+  document.title = `${topic.title} — RESPAWN Forum`;
+
+  // Sidebar
+  document.getElementById('sbCat').textContent     = topic.category_name;
+  document.getElementById('sbAuthor').textContent  = topic.username;
+  document.getElementById('sbReplies').textContent = topic.post_count;
+  document.getElementById('sbViews').textContent   = topic.view_count;
+  const catLink = document.getElementById('catLink');
+  catLink.href        = `forum.html`;
+  catLink.textContent = `→ ${topic.category_name} topics`;
+
+  // Category badge
+  document.getElementById('topicCatBadge').innerHTML =
+    `${escHtml(topic.category_icon || '💬')} ${escHtml(topic.category_name)}`;
+
+  // Title + meta
+  document.getElementById('topicTitle').textContent = topic.title;
+  const badges = [
+    topic.pinned ? '<span class="topic-pinned-badge">📌 Pinned</span>' : '',
+    topic.locked ? '<span class="topic-locked-badge">🔒 Locked</span>' : '',
+  ].filter(Boolean).join('');
+  document.getElementById('topicMeta').innerHTML =
+    `<span>${escHtml(topic.username)}</span>
+     <span>·</span>
+     <span>${escHtml(topic.created ? topic.created.slice(0, 16) : '')}</span>
+     <span>·</span>
+     <span>${topic.post_count} ${topic.post_count === 1 ? 'post' : 'posts'}</span>
+     ${badges}`;
+
+  renderPosts();
+
+  // Reply area
+  const ra = document.getElementById('replyArea');
+  if (topic.locked) {
+    ra.innerHTML = `<div class="locked-notice">🔒 This topic is locked and no longer accepts replies.</div>`;
+  } else {
+    ra.innerHTML = `
+      <div class="reply-form-card">
+        <h3>💬 Post a Reply</h3>
+        <textarea id="replyTextarea" placeholder="Write your reply…" maxlength="5000"
+          oninput="document.getElementById('replyCharCount').textContent=this.value.length+' / 5000'"></textarea>
+        <div class="reply-form-footer">
+          <span class="char-count" id="replyCharCount">0 / 5000</span>
+          <button class="btn-post-reply" id="postReplyBtn" onclick="submitReply()">Post Reply</button>
+        </div>
+      </div>`;
+  }
+
+  document.getElementById('loadingState').style.display = 'none';
+  document.getElementById('topicContent').style.display = '';
+}
+
+function renderPosts() {
+  const list = document.getElementById('postList');
+  if (!posts.length) {
+    list.innerHTML = '<div class="state-box">No posts yet.</div>';
+    return;
+  }
+  list.innerHTML = posts.map((p, i) => buildPostHtml(p, i)).join('');
+}
+
+function buildPostHtml(p, index) {
+  const initial  = (p.username || '?')[0].toUpperCase();
+  const isOp     = index === 0;
+  const isOwner  = user && user.id === p.user_id;
+  const isAdmin  = user && user.role === 'admin';
+  const rank     = getRank(p.user_post_count || 0);
+  const liked    = likedPosts.has(p.id);
+  const created  = p.created ? p.created.slice(0, 16) : '';
+
+  const avatarHtml = (p.avatar && p.avatar.trim())
+    ? `<img src="${escHtml(p.avatar)}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.textContent='${initial}'">`
+    : initial;
+
+  const deleteBtn = (isOwner || isAdmin)
+    ? `<button class="post-delete-btn" onclick="deletePost(${p.id})">🗑️ Delete</button>`
+    : '';
+
+  return `
+    <div class="post-card${isOp ? ' is-op' : ''}" id="post-${p.id}">
+      <div class="post-inner">
+        <div class="post-author">
+          <div class="post-avatar">${avatarHtml}</div>
+          <div class="post-username">${escHtml(p.username)}</div>
+          <span class="post-rank-badge ${rank.cls}">${rank.label}</span>
+          ${isOp ? '<div class="post-count-label" style="color:#a855f7;font-weight:700">OP</div>' : ''}
+        </div>
+        <div class="post-content">
+          <div class="post-content-header">
+            <span class="post-number">#${index + 1}</span>
+            <span>${escHtml(created)}</span>
+          </div>
+          <div class="post-body">${escHtml(p.body)}</div>
+          <div class="post-footer">
+            <button class="post-like-btn${liked ? ' liked' : ''}" id="like-btn-${p.id}" onclick="toggleLike(${p.id})">
+              ♥ <span id="like-count-${p.id}">${p.likes || 0}</span>
+            </button>
+            ${deleteBtn}
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+async function toggleLike(postId) {
+  try {
+    const r = await apiFetch(`/api/forum/posts/${postId}/like`, { method: 'POST' });
+    const d = await r.json();
+    if (!r.ok) return;
+    const btn = document.getElementById(`like-btn-${postId}`);
+    const cnt = document.getElementById(`like-count-${postId}`);
+    if (d.liked) likedPosts.add(postId); else likedPosts.delete(postId);
+    btn.classList.toggle('liked', d.liked);
+    cnt.textContent = d.likes;
+  } catch {}
+}
+
+async function submitReply() {
+  const ta  = document.getElementById('replyTextarea');
+  const btn = document.getElementById('postReplyBtn');
+  const body = ta.value.trim();
+  if (!body) return;
+  btn.disabled = true; btn.textContent = 'Posting…';
+  try {
+    const r = await apiFetch(`/api/forum/topics/${topicId}/posts`, {
+      method: 'POST',
+      body: JSON.stringify({ body }),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Failed');
+    posts.push(d.post);
+    ta.value = '';
+    document.getElementById('replyCharCount').textContent = '0 / 5000';
+    document.getElementById('sbReplies').textContent = posts.length;
+    renderPosts();
+    // scroll to new post
+    const last = document.getElementById(`post-${d.post.id}`);
+    if (last) last.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } catch (e) {
+    alert(e.message || 'Could not post reply.');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Post Reply';
+  }
+}
+
+async function deletePost(postId) {
+  if (!confirm('Delete this post?')) return;
+  try {
+    const r = await apiFetch(`/api/forum/posts/${postId}`, { method: 'DELETE' });
+    if (!r.ok) { const d = await r.json(); throw new Error(d.error || 'Failed'); }
+    posts = posts.filter(p => p.id !== postId);
+    document.getElementById('sbReplies').textContent = posts.length;
+    renderPosts();
+  } catch (e) {
+    alert(e.message || 'Could not delete post.');
+  }
+}
+
+init();
+</script>
+</body>
+</html>

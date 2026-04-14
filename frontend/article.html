@@ -55,7 +55,7 @@
     /* ── Article body ───────────────────────────────────────── */
     .article-wrap {
       display: grid;
-      grid-template-columns: 1fr 320px;
+      grid-template-columns: 1fr 280px;
       gap: 3rem;
       align-items: start;
     }
@@ -106,41 +106,98 @@
     .sidebar-info-row span:last-child { font-weight: 600; }
 
     /* ── Related news tiles ─────────────────────────────────── */
-    .related-tiles { display: flex; flex-direction: column; gap: .85rem; }
-
-    .related-tile {
-      display: flex; gap: .75rem; align-items: flex-start;
-      text-decoration: none; color: inherit;
-      padding: .65rem;
-      border-radius: 10px;
-      transition: background .18s;
+    /* ── Related news carousel ──────────────────────────────── */
+    .related-carousel-section {
+      margin-top: 2.5rem;
+      margin-bottom: 2.5rem;
+      border-top: 1px solid var(--border);
+      padding-top: 1.8rem;
     }
-    .related-tile:hover { background: var(--surface2); }
-
-    .related-tile__thumb {
-      width: 68px; height: 52px;
-      border-radius: 7px;
-      object-fit: cover;
-      flex-shrink: 0;
+    .related-carousel-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+    .related-carousel-title {
+      font-size: .72rem; font-weight: 800;
+      letter-spacing: .1em; text-transform: uppercase;
+      color: var(--muted);
+      display: flex; align-items: center; gap: .5rem;
+    }
+    .related-carousel-title::before {
+      content: '';
+      display: inline-block; width: 3px; height: 14px;
+      background: linear-gradient(180deg, #a855f7, #ef4444);
+      border-radius: 2px;
+    }
+    .carousel-nav {
+      display: flex; gap: .4rem;
+    }
+    .carousel-btn {
+      width: 30px; height: 30px;
+      border-radius: 8px;
       background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: .85rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .15s, color .15s, border-color .15s;
     }
-    .related-tile__body { flex: 1; min-width: 0; }
-    .related-tile__tag {
-      display: inline-block;
-      font-size: .62rem; font-weight: 800;
-      letter-spacing: .08em; text-transform: uppercase;
-      color: #a855f7; margin-bottom: .25rem;
+    .carousel-btn:hover:not(:disabled) {
+      background: rgba(124,58,237,.15);
+      border-color: rgba(124,58,237,.4);
+      color: #c084fc;
     }
-    .related-tile__title {
-      font-size: .8rem; font-weight: 700;
-      line-height: 1.35;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
+    .carousel-btn:disabled { opacity: .3; cursor: not-allowed; }
+
+    .carousel-track-wrap {
       overflow: hidden;
-      margin-bottom: .2rem;
+      position: relative;
     }
-    .related-tile__date { font-size: .68rem; color: var(--muted); }
+    .carousel-track {
+      display: flex;
+      gap: 1rem;
+      transition: transform .35s cubic-bezier(.4,0,.2,1);
+    }
+
+    .related-card {
+      flex: 0 0 220px;
+      text-decoration: none; color: inherit;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: border-color .18s, transform .15s, box-shadow .18s;
+      display: flex; flex-direction: column;
+    }
+    .related-card:hover {
+      border-color: rgba(124,58,237,.45);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 28px rgba(0,0,0,.35);
+    }
+    .related-card__img {
+      width: 100%; height: 120px;
+      object-fit: cover; display: block;
+      background: var(--surface2);
+      flex-shrink: 0;
+    }
+    .related-card__body {
+      padding: .8rem .9rem .9rem;
+      flex: 1; display: flex; flex-direction: column;
+    }
+    .related-card__tag {
+      font-size: .6rem; font-weight: 800;
+      letter-spacing: .08em; text-transform: uppercase;
+      color: #a855f7; margin-bottom: .3rem;
+    }
+    .related-card__title {
+      font-size: .82rem; font-weight: 700; line-height: 1.38;
+      display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3;
+      -webkit-box-orient: vertical; overflow: hidden;
+      flex: 1; margin-bottom: .45rem;
+    }
+    .related-card__date {
+      font-size: .65rem; color: var(--muted); margin-top: auto;
+    }
 
     /* ── Comments section ───────────────────────────────────── */
     .comments-section {
@@ -166,21 +223,21 @@
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 1.4rem;
-      margin-bottom: 2rem;
+      padding: .9rem 1.1rem;
+      margin-bottom: 1.2rem;
     }
     .comment-form textarea {
       width: 100%;
       background: var(--surface2);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: .85rem 1rem;
+      border-radius: 8px;
+      padding: .6rem .85rem;
       color: var(--text);
-      font-size: .92rem;
+      font-size: .88rem;
       font-family: inherit;
       line-height: 1.5;
       resize: vertical;
-      min-height: 90px;
+      min-height: 68px;
       outline: none;
       transition: border-color .2s, box-shadow .2s;
     }
@@ -190,17 +247,17 @@
     }
     .comment-form-footer {
       display: flex; justify-content: space-between; align-items: center;
-      margin-top: .75rem;
+      margin-top: .5rem;
     }
     .char-count {
-      font-size: .72rem; color: var(--muted);
+      font-size: .68rem; color: var(--muted);
     }
     .char-count.warn { color: #ef4444; }
     .btn-comment {
-      padding: .5rem 1.2rem;
+      padding: .4rem 1rem;
       background: linear-gradient(135deg, #7c3aed, #6d28d9);
-      border: none; border-radius: 8px;
-      color: #fff; font-size: .82rem; font-weight: 700;
+      border: none; border-radius: 7px;
+      color: #fff; font-size: .78rem; font-weight: 700;
       letter-spacing: .04em; text-transform: uppercase;
       cursor: pointer;
       transition: opacity .2s, transform .15s;
@@ -209,30 +266,30 @@
     .btn-comment:disabled { opacity: .4; cursor: not-allowed; transform: none; }
 
     /* Comment list */
-    .comment-list { display: flex; flex-direction: column; gap: 1rem; }
+    .comment-list { display: flex; flex-direction: column; gap: .65rem; }
 
     .comment-item {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 1.2rem 1.4rem;
+      padding: .85rem 1rem;
     }
     .comment-header {
-      display: flex; align-items: center; gap: .6rem;
-      margin-bottom: .65rem;
+      display: flex; align-items: center; gap: .5rem;
+      margin-bottom: .45rem;
     }
     .comment-avatar {
-      width: 30px; height: 30px;
+      width: 26px; height: 26px;
       border-radius: 50%;
       background: linear-gradient(135deg, #7c3aed, #ef4444);
       display: flex; align-items: center; justify-content: center;
-      font-size: .8rem; font-weight: 700; color: #fff;
+      font-size: .72rem; font-weight: 700; color: #fff;
       flex-shrink: 0;
     }
-    .comment-username { font-size: .85rem; font-weight: 700; }
-    .comment-date { font-size: .72rem; color: var(--muted); margin-left: auto; }
+    .comment-username { font-size: .82rem; font-weight: 700; }
+    .comment-date { font-size: .68rem; color: var(--muted); margin-left: auto; }
     .comment-body {
-      font-size: .9rem; line-height: 1.6; color: #d4d4e0;
+      font-size: .85rem; line-height: 1.55; color: #d4d4e0;
     }
     .comment-delete {
       background: none; border: none;
@@ -306,31 +363,40 @@
 
     /* Reply thread — cascade style */
     .reply-thread {
-      margin-top: .85rem;
-      padding-left: 1.25rem;
-      display: flex; flex-direction: column; gap: .6rem;
+      margin-top: .75rem;
+      margin-left: 2.5rem;   /* indent the whole reply block */
+      margin-right: 1.5rem;  /* narrow on the right too */
+      padding-left: 1.1rem;  /* room for the vertical line */
+      display: flex; flex-direction: column; gap: .55rem;
       position: relative;
     }
     .reply-thread::before {
       content: '';
       position: absolute; left: 0; top: 0; bottom: 0;
       width: 2px;
-      background: linear-gradient(to bottom, #a855f7, rgba(124,58,237,.15));
+      background: linear-gradient(to bottom, #a855f7, rgba(124,58,237,.1));
       border-radius: 2px;
     }
     .comment-item.is-reply {
-      background: rgba(124,58,237,.04);
-      border-color: rgba(124,58,237,.15);
+      background: rgba(124,58,237,.05);
+      border-color: rgba(124,58,237,.18);
       position: relative;
+      padding: 1rem 1.1rem;
     }
     .comment-item.is-reply::before {
       content: '';
-      position: absolute; left: -1.25rem; top: 1.2rem;
-      width: 1.1rem; height: 2px;
-      background: rgba(124,58,237,.35);
+      position: absolute; left: -1.1rem; top: 1.15rem;
+      width: .95rem; height: 2px;
+      background: rgba(124,58,237,.4);
     }
     .comment-item.is-reply .comment-avatar {
       width: 26px; height: 26px; font-size: .75rem;
+    }
+    .comment-item.is-reply .comment-username {
+      font-size: .82rem;
+    }
+    .comment-item.is-reply .comment-body {
+      font-size: .87rem;
     }
 
     /* Inline reply form */
@@ -401,6 +467,7 @@
     <a href="category.html?cat=PC">PC</a>
     <a href="category.html?cat=eSports">eSports</a>
     <a href="category.html?cat=Mobile">Mobile</a>
+    <a href="forum.html">Forum</a>
   </div>
   <div class="nav-right">
     <div class="nav-user">
@@ -442,6 +509,20 @@
       <!-- Body text -->
       <div>
         <div class="article-body" id="articleBody"></div>
+
+        <!-- Related News Carousel -->
+        <div class="related-carousel-section" id="relatedSection" style="display:none">
+          <div class="related-carousel-header">
+            <div class="related-carousel-title">Related News</div>
+            <div class="carousel-nav">
+              <button class="carousel-btn" id="carouselPrev" onclick="carouselMove(-1)" title="Previous">‹</button>
+              <button class="carousel-btn" id="carouselNext" onclick="carouselMove(1)"  title="Next">›</button>
+            </div>
+          </div>
+          <div class="carousel-track-wrap">
+            <div class="carousel-track" id="carouselTrack"></div>
+          </div>
+        </div>
 
         <!-- Comments -->
         <div class="comments-section">
@@ -489,12 +570,6 @@
           </div>
         </div>
 
-        <div class="sidebar-card">
-          <div class="sidebar-card__title">Related News</div>
-          <div class="related-tiles" id="relatedTiles">
-            <div style="font-size:.78rem;color:var(--muted)">Loading…</div>
-          </div>
-        </div>
       </aside>
 
     </div>
@@ -641,33 +716,58 @@
     }
   }
 
-  // ── Related News ───────────────────────────────────────────────────────────
+  // ── Related News Carousel ─────────────────────────────────────────────────
+  let carouselIndex   = 0;
+  let carouselItems   = 0;
+  const CARD_WIDTH    = 220 + 16; // card width + gap (px)
+  const VISIBLE_COUNT = () => Math.max(1, Math.floor(
+    (document.getElementById('carouselTrack')?.parentElement?.offsetWidth || 660) / CARD_WIDTH
+  ));
+
   async function loadRelated(category) {
-    const el = document.getElementById('relatedTiles');
     try {
       const res  = await apiFetch(`/api/news/${articleId}/related`);
       const data = await res.json();
       const articles = data.articles || [];
-      if (!articles.length) {
-        el.innerHTML = `<div style="font-size:.78rem;color:var(--muted)">No related articles found.</div>`;
-        return;
-      }
-      el.innerHTML = articles.map(r => `
-        <a class="related-tile" href="article.html?id=${r.id}">
-          <img class="related-tile__thumb"
+      if (!articles.length) return;
+
+      const section = document.getElementById('relatedSection');
+      const track   = document.getElementById('carouselTrack');
+
+      track.innerHTML = articles.map(r => `
+        <a class="related-card" href="article.html?id=${r.id}">
+          <img class="related-card__img"
                src="${escHtml(r.image || '')}"
-               alt=""
+               alt="${escHtml(r.headline)}"
+               loading="lazy"
                onerror="this.style.display='none'">
-          <div class="related-tile__body">
-            <div class="related-tile__tag">${escHtml(r.tag || r.category)}</div>
-            <div class="related-tile__title">${escHtml(r.title)}</div>
-            <div class="related-tile__date">${escHtml(r.date)}</div>
+          <div class="related-card__body">
+            <div class="related-card__tag">${escHtml(r.tag || r.category)}</div>
+            <div class="related-card__title">${escHtml(r.headline)}</div>
+            <div class="related-card__date">${escHtml(r.date)}</div>
           </div>
         </a>
       `).join('');
-    } catch {
-      el.innerHTML = `<div style="font-size:.78rem;color:var(--muted)">Could not load related news.</div>`;
-    }
+
+      carouselItems = articles.length;
+      carouselIndex = 0;
+      section.style.display = '';
+      updateCarouselButtons();
+    } catch { /* silently skip */ }
+  }
+
+  function carouselMove(dir) {
+    const visible = VISIBLE_COUNT();
+    carouselIndex = Math.max(0, Math.min(carouselIndex + dir, carouselItems - visible));
+    document.getElementById('carouselTrack').style.transform =
+      `translateX(-${carouselIndex * CARD_WIDTH}px)`;
+    updateCarouselButtons();
+  }
+
+  function updateCarouselButtons() {
+    const visible = VISIBLE_COUNT();
+    document.getElementById('carouselPrev').disabled = carouselIndex === 0;
+    document.getElementById('carouselNext').disabled = carouselIndex >= carouselItems - visible;
   }
 
   // ── Comments ───────────────────────────────────────────────────────────────
