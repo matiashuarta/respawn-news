@@ -1,0 +1,68 @@
+# Manual rollback to the previous stable deploy.
+# Trigger: GitHub → Actions tab → Rollback Production → Run workflow
+#
+# What it does:
+#   1. Finds the second most recent deploy-* tag on the server
+#   2. Checks out that commit
+#   3. Restarts the Python server with the old code
+#
+# Caveat: rolls back CODE only. If the deploy included a DB schema change,
+# see the comments in the script below.
+#
+# Required secrets (same as deploy.yml):
+#   SERVER_IP, SERVER_USER, SSH_PRIVATE_KEY
+
+name: Rollback Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Why are you rolling back?"
+        required: true
+        type: string
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Rollback to previous deploy tag
+        uses: appleboy/ssh-action@v1
+        with:
+          host:     ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key:      ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/respawn-news
+
+            # List deploy tags newest-first, pick the second one (previous stable)
+            PREVIOUS_TAG=$(git tag --sort=-creatordate | grep "^deploy-" | sed -n '2p')
+
+            if [ -z "$PREVIOUS_TAG" ]; then
+              echo "ERROR: No previous deploy tag found. Cannot rollback."
+              exit 1
+            fi
+
+            CURRENT_TAG=$(git tag --sort=-creatordate | grep "^deploy-" | sed -n '1p')
+            echo "Current deploy : $CURRENT_TAG"
+            echo "Rolling back to: $PREVIOUS_TAG"
+            echo "Reason         : ${{ github.event.inputs.reason }}"
+
+            # If you use PostgreSQL and the deploy included a migration,
+            # restore your DB backup here before checking out old code:
+            #
+            #   pg_restore -h $DB_HOST -U $DB_USER -d $DB_NAME /backups/$PREVIOUS_TAG.dump
+            #
+            # With SQLite, copy the backup file over the live DB:
+            #
+            #   cp /backups/$PREVIOUS_TAG.db backend/respawn.db
+            #
+            # Both options are commented out until backup logic is added to deploy.yml
+
+            git checkout $PREVIOUS_TAG
+
+            pkill -f server.py || true
+            nohup python backend/server.py > /var/log/respawn.log 2>&1 &
+
+            echo "Rollback complete — now running $PREVIOUS_TAG"

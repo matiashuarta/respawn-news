@@ -1,0 +1,67 @@
+# Runs on every push to master.
+# 1. Backs up the database (tagged with deploy name)
+# 2. Pulls latest code
+# 3. Restarts the Python server
+# 4. Tags the commit so rollback.yml can reference it
+#
+# Required GitHub Secrets (repo → Settings → Secrets and variables → Actions):
+#   SERVER_IP         — public IP address of your production server
+#   SERVER_USER       — Linux username on the server (e.g. ubuntu)
+#   SSH_PRIVATE_KEY   — contents of .keys/deploy_key (the private key)
+#
+# One-time server setup (do this manually the first time):
+#   1. Add .keys/deploy_key.pub to ~/.ssh/authorized_keys on the server
+#   2. Clone the repo:  git clone https://github.com/<you>/respawn-news.git /var/www/respawn-news
+#   3. Create backup dir: mkdir -p /backups
+#   4. Start the server: cd /var/www/respawn-news && nohup python backend/server.py &
+
+name: Deploy to Production
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host:     ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key:      ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/respawn-news
+
+            # Generate a unique tag for this deploy (timestamp-based)
+            TAG="deploy-$(date +%Y-%m-%d-%H%M%S)"
+            echo "Deploy tag: $TAG"
+
+            # ── Step 1: Back up the database before touching anything ──────────
+            #
+            # SQLite: simple file copy, tagged with the deploy name
+            # so rollback.yml can restore exactly the state before this deploy
+            mkdir -p /backups
+            cp backend/respawn.db /backups/$TAG.db
+            echo "DB backup saved to /backups/$TAG.db"
+            #
+            # When you migrate to PostgreSQL, replace the line above with:
+            #   pg_dump -h $DB_HOST -U $DB_USER $DB_NAME > /backups/$TAG.dump
+            # and set DB_HOST, DB_USER, DB_NAME as env vars on the server.
+            #
+            # Optional: delete backups older than 30 days to save disk space
+            find /backups -name "*.db" -mtime +30 -delete
+
+            # ── Step 2: Pull latest code ───────────────────────────────────────
+            git pull origin master
+
+            # ── Step 3: Restart the server ────────────────────────────────────
+            pkill -f server.py || true
+            nohup python backend/server.py > /var/log/respawn.log 2>&1 &
+            echo "Server restarted"
+
+            # ── Step 4: Tag this commit so rollback can find it ───────────────
+            git tag $TAG
+            echo "Deploy complete — tagged as $TAG"
