@@ -1,0 +1,32 @@
+# Runs on every pull request targeting dev or master.
+# Validates Python syntax across all backend files.
+# Extend this file when you add a backend/tests/ folder with pytest tests.
+
+name: Run Tests
+
+on:
+  pull_request:
+    branches: [dev, master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check syntax (all backend files)
+        run: |
+          python -m py_compile backend/server.py
+          python -m py_compile backend/db.py
+          python -m py_compile backend/news_data.py
+          echo "Syntax OK"
+
+      # Uncomment when you have real tests:
+      # - name: Run pytest
+      #   run: python -m pytest backend/tests/ -v

@@ -11,7 +11,9 @@
       "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); arts=d.get\\('articles',[]\\); print\\(f'Related: {len\\(arts\\)} articles'\\); [print\\(f'  {a[\\\\\"headline\\\\\"][:50]} | {a[\\\\\"date\\\\\"]}'\\) for a in arts[:4]]\")",
       "Bash(python -c ':*)",
       "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); ts=d.get\\('topics',[]\\); print\\(f'General: {len\\(ts\\)} topics'\\); [print\\(f'  [{\\\\\"P\\\\\" if t[\\\\\"pinned\\\\\"] else \\\\\" \\\\\"}] {t[\\\\\"title\\\\\"][:65]}'\\) for t in ts]\")",
-      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); ts=d.get\\('topics',[]\\); [print\\(f'  {t[\\\\\"title\\\\\"][:55]}'\\) for t in ts]; print\\(f'Total general topics: {len\\(ts\\)}'\\)\")"
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); ts=d.get\\('topics',[]\\); [print\\(f'  {t[\\\\\"title\\\\\"][:55]}'\\) for t in ts]; print\\(f'Total general topics: {len\\(ts\\)}'\\)\")",
+      "Bash(mkdir -p .keys)",
+      "Bash(ssh-keygen -t ed25519 -C \"github-actions-deploy-respawn\" -f .keys/deploy_key -N \"\")"
     ]
   }
 }
