@@ -25,12 +25,16 @@
 
     /* ── Stats bar ───────────────────────────────────────── */
     .forum-stats-bar {
-      display: flex; gap: 2rem; align-items: center;
-      padding: .85rem 2rem;
       background: var(--surface);
       border-bottom: 1px solid var(--border);
+      padding: .85rem 2rem;
       font-size: .78rem;
     }
+    .stats-bar-inner {
+      max-width: 1200px; margin: 0 auto;
+      display: flex; gap: 2rem; align-items: center; flex-wrap: wrap;
+    }
+    #userRankWrap { margin-left: auto; }
     .forum-stat { display: flex; align-items: center; gap: .4rem; color: var(--muted); }
     .forum-stat strong { color: var(--text); font-size: .88rem; }
 
@@ -202,6 +206,7 @@
       border-radius: 18px;
       padding: 1.8rem;
       width: 100%; max-width: 560px;
+      max-height: 90vh; overflow-y: auto;
       box-shadow: 0 24px 60px rgba(0,0,0,.5);
     }
     .modal-box h2 { font-size: 1.1rem; font-weight: 800; margin-bottom: 1.2rem; }
@@ -236,11 +241,29 @@
     @media (max-width: 900px) {
       .forum-layout { grid-template-columns: 1fr; }
       .forum-sidebar { order: -1; display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
+      /* Contain cards so nothing bleeds outside */
+      .category-card { overflow: hidden; }
+      .category-card-inner { min-width: 0; }
+      .cat-info { min-width: 0; }
+      /* Hide overflow elements at tablet */
+      .cat-stats { display: none; }
+      .tpr-count { display: none; }
     }
     @media (max-width: 560px) {
+      .forum-hero { padding: 1.4rem 1rem 1.2rem; }
+      .forum-hero h1 { font-size: 1.4rem; }
       .forum-layout { padding: 1.2rem 1rem; }
-      .forum-stats-bar { gap: 1rem; flex-wrap: wrap; }
+      .forum-stats-bar { gap: .75rem 1.2rem; flex-wrap: wrap; padding: .7rem 1rem; }
       .forum-sidebar { grid-template-columns: 1fr; }
+      .modal-box { padding: 1.2rem; border-radius: 12px; }
+      .modal-footer { flex-direction: column; }
+      .modal-footer .btn-cancel,
+      .modal-footer .btn-submit { width: 100%; text-align: center; justify-content: center; }
+      #userRankWrap { margin-left: 0 !important; }
+    }
+    @media (max-width: 420px) {
+      .forum-hero h1 { font-size: 1.2rem; }
+      .btn-new-topic { width: 100%; justify-content: center; }
     }
   </style>
 </head>
@@ -285,11 +308,11 @@
 
 <!-- Stats bar -->
 <div class="forum-stats-bar">
-  <div style="max-width:1200px;margin:0 auto;display:flex;gap:2rem;align-items:center;flex-wrap:wrap;">
+  <div class="stats-bar-inner">
     <div class="forum-stat"><span class="online-dot"></span> <strong id="statMembers">—</strong> members</div>
     <div class="forum-stat">💬 <strong id="statTopics">—</strong> topics</div>
     <div class="forum-stat">📝 <strong id="statPosts">—</strong> posts</div>
-    <div class="forum-stat" id="userRankWrap" style="margin-left:auto">
+    <div class="forum-stat" id="userRankWrap">
       Your rank: <span id="userRankBadge" style="margin-left:.4rem"></span>
     </div>
   </div>

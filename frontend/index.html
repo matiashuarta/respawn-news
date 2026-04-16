@@ -65,15 +65,16 @@
     <!-- Admin hint -->
     <div style="margin-top:1.5rem;padding:1rem;background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.2);border-radius:10px;font-size:.78rem;color:var(--muted);line-height:1.6;">
       <strong style="color:#a855f7;display:block;margin-bottom:.3rem;">⚙️ Admin Access</strong>
-      URL: <code style="color:var(--text)">http://localhost:8765/admin.html</code><br>
-      Email: <code style="color:var(--text)">admin@respawn.gg</code> &nbsp;·&nbsp; Password: <code style="color:var(--text)">admin123</code>
+      URL: <code style="color:var(--text);word-break:break-all">http://localhost:8765/admin.html</code><br>
+      Email: <code style="color:var(--text);word-break:break-all">admin@respawn.gg</code><br>
+      Password: <code style="color:var(--text)">admin123</code>
     </div>
 
   </div>
 </div>
 
 <script>
-  const API = 'http://localhost:8765/api';
+  const API = `${location.protocol}//${location.hostname}:8765/api`;
 
   // ── Redirect if already logged in ──────────────────────────────────────────
   if (localStorage.getItem('respawn_token')) {

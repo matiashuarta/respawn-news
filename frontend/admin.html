@@ -345,6 +345,29 @@
     .toast.show { transform: translateY(0); opacity: 1; }
     .toast.error { border-left-color: #ef4444; }
     .toast.success { border-left-color: #22c55e; }
+
+    /* ── Responsive ──────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .admin-topbar { padding: .7rem 1rem; gap: .6rem; }
+      .admin-topbar-right span { display: none; }
+      .admin-body { padding: 1.2rem 1rem 3rem; }
+      .col-cat, .col-score, .col-featured { display: none; }
+      .col-headline { max-width: none; }
+      .form-row { grid-template-columns: 1fr; }
+      .stats-bar { gap: .6rem; }
+      .stat-card { padding: .75rem 1rem; min-width: 0; }
+      .stat-num { font-size: 1.5rem; }
+    }
+    @media (max-width: 480px) {
+      .admin-brand .badge { display: none; }
+      .btn-back { display: none; }
+      .admin-topbar-right { gap: .5rem; }
+      .articles-table th, .articles-table td { padding: .6rem .7rem; }
+      .btn-edit, .btn-del { padding: .3rem .55rem; font-size: .72rem; }
+      .modal { padding: 1.2rem; }
+      .modal-footer { flex-direction: column; }
+      .btn-cancel, .btn-save { width: 100%; text-align: center; }
+    }
   </style>
 </head>
 <body>
@@ -540,7 +563,7 @@
      Script
 ───────────────────────────────────────────────────────── -->
 <script>
-const API = 'http://localhost:8765';
+const API = `${location.protocol}//${location.hostname}:8765`;
 const PER_PAGE = 15;
 
 // ── Auth guard — must be logged in AND role=admin ──────────────────────────
