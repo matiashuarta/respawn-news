@@ -39,7 +39,7 @@ desktop.ini
 *.code-workspace
 
 # Claude Code local config (contains machine-specific settings)
-.claude/settings.local.json
+.claude/
 
 # Logs
 *.log
