@@ -130,17 +130,22 @@ class RespawnHandler(BaseHTTPRequestHandler):
         path   = parsed.path
         params = urllib.parse.parse_qs(parsed.query)
 
-        # /api/news — all articles (optionally filtered by category)
+        # /api/news — all articles (optionally filtered by category), supports ?limit= &offset=
         if path == "/api/news":
             user = require_auth(self)
             if not user:
                 return
             category = params.get("category", [None])[0]
+            try:
+                limit  = int(params["limit"][0])  if "limit"  in params else None
+                offset = int(params["offset"][0]) if "offset" in params else 0
+            except (ValueError, IndexError):
+                limit, offset = None, 0
             if category:
-                articles = db.get_articles_by_category(category)
+                articles, total = db.get_articles_by_category(category, limit=limit, offset=offset)
             else:
-                articles = db.get_all_articles()
-            return json_response(self, {"articles": articles, "total": len(articles)})
+                articles, total = db.get_all_articles(limit=limit, offset=offset)
+            return json_response(self, {"articles": articles, "total": total})
 
         # /api/news/featured
         if path == "/api/news/featured":
@@ -159,10 +164,8 @@ class RespawnHandler(BaseHTTPRequestHandler):
             article    = db.get_article_by_id(article_id)
             if not article:
                 return error_response(self, "Article not found", 404)
-            related = [
-                a for a in db.get_articles_by_category(article["category"])
-                if a["id"] != article_id
-            ][:10]
+            all_cat, _ = db.get_articles_by_category(article["category"])
+            related = [a for a in all_cat if a["id"] != article_id][:10]
             return json_response(self, {"articles": related})
 
         # /api/news/{id}/comments  (includes per-user votes if ?user_id= provided)
@@ -211,8 +214,8 @@ class RespawnHandler(BaseHTTPRequestHandler):
             user = require_admin(self)
             if not user:
                 return
-            articles = db.get_all_articles()
-            return json_response(self, {"articles": articles, "total": len(articles)})
+            articles, total = db.get_all_articles()
+            return json_response(self, {"articles": articles, "total": total})
 
         # /api/forum/categories
         if path == "/api/forum/categories":
@@ -384,17 +387,18 @@ class RespawnHandler(BaseHTTPRequestHandler):
             tag_class = body.get("tag_class") or infer_tag_class(category)
 
             article_data = {
-                "category":  category,
-                "tag":       tag,
-                "tag_class": tag_class,
-                "headline":  headline,
-                "summary":   summary,
-                "author":    author,
-                "date":      date,
-                "score":     body.get("score"),
-                "image":     image,
-                "featured":  bool(body.get("featured", False)),
-                "body":      (body.get("body") or "").strip(),
+                "category":       category,
+                "tag":            tag,
+                "tag_class":      tag_class,
+                "headline":       headline,
+                "summary":        summary,
+                "author":         author,
+                "date":           date,
+                "score":          body.get("score"),
+                "image":          image,
+                "image_position": (body.get("image_position") or "50% 50%").strip(),
+                "featured":       bool(body.get("featured", False)),
+                "body":           (body.get("body") or "").strip(),
             }
 
             article, err = db.create_article(article_data)

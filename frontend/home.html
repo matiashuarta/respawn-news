@@ -118,6 +118,10 @@
     <div id="newsGrid" class="sub-grid">
       <div class="spinner"></div>
     </div>
+    <div class="load-more-wrap">
+      <button class="btn-load-more" id="loadMoreBtn" style="display:none"
+              onclick="loadNewsMore()">Load More</button>
+    </div>
   </div>
 
 </div>
@@ -203,23 +207,71 @@
     }
   }
 
-  // ── Fetch & render all news ────────────────────────────────────────────────
-  let currentCat = '';
+  // ── Pagination state ────────────────────────────────────────────────────────
+  let currentCat    = '';
+  let currentOffset = 0;
+  let currentTotal  = 0;
 
+  function pageLimit() {
+    return window.innerWidth >= 1024 ? 12 : window.innerWidth >= 600 ? 9 : 6;
+  }
+
+  // ── Fetch & render all news (first load or category switch) ────────────────
   async function loadNews(cat = '') {
     const grid = document.getElementById('newsGrid');
     grid.innerHTML = '<div class="spinner"></div>';
-    currentCat = cat;
-    const url = cat ? `/api/news?category=${encodeURIComponent(cat)}` : '/api/news';
+    currentCat    = cat;
+    currentOffset = 0;
+    currentTotal  = 0;
+    document.getElementById('loadMoreBtn').style.display = 'none';
+
+    const limit = pageLimit();
+    const params = new URLSearchParams({ limit, offset: 0 });
+    if (cat) params.set('category', cat);
     try {
-      const res  = await apiFetch(url);
+      const res  = await apiFetch('/api/news?' + params);
       const data = await res.json();
       const articles = data.articles || [];
-      if (!articles.length) { grid.innerHTML = '<div class="empty"><span class="empty-icon">🎮</span>No articles in this category yet.</div>'; return; }
+      currentTotal  = data.total  || 0;
+      currentOffset = articles.length;
+
+      if (!articles.length) {
+        grid.innerHTML = '<div class="empty"><span class="empty-icon">🎮</span>No articles in this category yet.</div>';
+        return;
+      }
       grid.innerHTML = articles.map(renderCard).join('');
+      updateLoadMore();
     } catch {
       grid.innerHTML = '<p class="empty">Could not load articles.</p>';
     }
+  }
+
+  // ── Append next batch ──────────────────────────────────────────────────────
+  async function loadNewsMore() {
+    const btn  = document.getElementById('loadMoreBtn');
+    const grid = document.getElementById('newsGrid');
+    btn.disabled = true; btn.textContent = 'Loading…';
+
+    const limit = pageLimit();
+    const params = new URLSearchParams({ limit, offset: currentOffset });
+    if (currentCat) params.set('category', currentCat);
+    try {
+      const res  = await apiFetch('/api/news?' + params);
+      const data = await res.json();
+      const articles = data.articles || [];
+      currentOffset += articles.length;
+      grid.insertAdjacentHTML('beforeend', articles.map(renderCard).join(''));
+      updateLoadMore();
+    } catch {
+      /* silently keep button visible */
+    } finally {
+      btn.disabled = false; btn.textContent = 'Load More';
+    }
+  }
+
+  function updateLoadMore() {
+    const btn = document.getElementById('loadMoreBtn');
+    btn.style.display = currentOffset < currentTotal ? '' : 'none';
   }
 
   // ── Category pill filter ───────────────────────────────────────────────────
