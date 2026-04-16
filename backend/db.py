@@ -68,6 +68,13 @@ def init_db():
         conn.commit()
         print("[DB] Migrated: added body column to articles")
 
+    # Add image_position column to articles if missing
+    existing_cols = [row[1] for row in conn.execute("PRAGMA table_info(articles)").fetchall()]
+    if "image_position" not in existing_cols:
+        conn.execute("ALTER TABLE articles ADD COLUMN image_position TEXT NOT NULL DEFAULT 'center center'")
+        conn.commit()
+        print("[DB] Migrated: added image_position column to articles")
+
     # Add avatar column to users if missing
     user_cols = [row[1] for row in conn.execute("PRAGMA table_info(users)").fetchall()]
     if "avatar" not in user_cols:
@@ -132,12 +139,13 @@ def init_db():
         for a in news_data.ARTICLES:
             conn.execute(
                 """INSERT INTO articles
-                   (category, tag, tag_class, headline, summary, author, date, score, image, featured, body)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                   (category, tag, tag_class, headline, summary, author, date, score, image, image_position, featured, body)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     a["category"], a["tag"], a["tag_class"],
                     a["headline"], a["summary"], a["author"],
                     a["date"], a.get("score"), a["image"],
+                    a.get("image_position", "50% 50%"),
                     1 if a.get("featured") else 0,
                     a.get("body", ""),
                 ),
@@ -145,39 +153,42 @@ def init_db():
         conn.commit()
         print(f"[DB] Seeded {len(news_data.ARTICLES)} articles")
     else:
-        # ── Patch existing articles: fix Nintendo images & fill body text ──────
+        # ── Patch existing articles: sync images, body, and image_position ─────
         import news_data
         patched = 0
         inserted = 0
         for a in news_data.ARTICLES:
             row = conn.execute(
-                "SELECT image, body FROM articles WHERE id = ?", (a["id"],)
+                "SELECT image, body, image_position FROM articles WHERE id = ?", (a["id"],)
             ).fetchone()
             if not row:
                 # New article added to seed data — insert it
                 conn.execute(
                     """INSERT INTO articles
-                       (id, category, tag, tag_class, headline, summary, author, date, score, image, featured, body)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                       (id, category, tag, tag_class, headline, summary, author, date, score, image, image_position, featured, body)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                     (
                         a["id"], a["category"], a["tag"], a["tag_class"],
                         a["headline"], a["summary"], a["author"],
                         a["date"], a.get("score"), a["image"],
+                        a.get("image_position", "50% 50%"),
                         1 if a.get("featured") else 0,
                         a.get("body", ""),
                     ),
                 )
                 inserted += 1
                 continue
-            new_image = a["image"]
-            new_body  = a.get("body", "")
-            old_image = row["image"]
-            old_body  = row["body"] or ""
-            needs_update = (old_image != new_image) or (not old_body and new_body)
+            new_image    = a["image"]
+            new_body     = a.get("body", "")
+            new_img_pos  = a.get("image_position", "50% 50%")
+            old_image    = row["image"]
+            old_body     = row["body"] or ""
+            old_img_pos  = row["image_position"] or "50% 50%"
+            needs_update = (old_image != new_image) or (not old_body and new_body) or (old_img_pos != new_img_pos)
             if needs_update:
                 conn.execute(
-                    "UPDATE articles SET image = ?, body = ? WHERE id = ?",
-                    (new_image, new_body if not old_body else old_body, a["id"]),
+                    "UPDATE articles SET image = ?, body = ?, image_position = ? WHERE id = ?",
+                    (new_image, new_body if not old_body else old_body, new_img_pos, a["id"]),
                 )
                 patched += 1
         if inserted:
@@ -622,30 +633,48 @@ def _row_to_article(row) -> dict:
     d = dict(row)
     d["featured"] = bool(d["featured"])
     d.setdefault("body", "")
+    d.setdefault("image_position", "center center")
     return d
 
 
 # ── Article queries ───────────────────────────────────────────────────────────
 
-def get_all_articles():
+def get_all_articles(limit: int = None, offset: int = 0):
     conn = get_conn()
     try:
-        rows = conn.execute(
-            "SELECT * FROM articles ORDER BY id DESC"
-        ).fetchall()
-        return [_row_to_article(r) for r in rows]
+        total = conn.execute("SELECT COUNT(*) FROM articles").fetchone()[0]
+        if limit is not None:
+            rows = conn.execute(
+                "SELECT * FROM articles ORDER BY id DESC LIMIT ? OFFSET ?",
+                (limit, offset),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT * FROM articles ORDER BY id DESC"
+            ).fetchall()
+        return [_row_to_article(r) for r in rows], total
     finally:
         conn.close()
 
 
-def get_articles_by_category(category: str):
+def get_articles_by_category(category: str, limit: int = None, offset: int = 0):
     conn = get_conn()
     try:
-        rows = conn.execute(
-            "SELECT * FROM articles WHERE lower(category) = lower(?) ORDER BY id DESC",
+        total = conn.execute(
+            "SELECT COUNT(*) FROM articles WHERE lower(category) = lower(?)",
             (category,),
-        ).fetchall()
-        return [_row_to_article(r) for r in rows]
+        ).fetchone()[0]
+        if limit is not None:
+            rows = conn.execute(
+                "SELECT * FROM articles WHERE lower(category) = lower(?) ORDER BY id DESC LIMIT ? OFFSET ?",
+                (category, limit, offset),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT * FROM articles WHERE lower(category) = lower(?) ORDER BY id DESC",
+                (category,),
+            ).fetchall()
+        return [_row_to_article(r) for r in rows], total
     finally:
         conn.close()
 
@@ -678,8 +707,8 @@ def create_article(data: dict):
     try:
         cur = conn.execute(
             """INSERT INTO articles
-               (category, tag, tag_class, headline, summary, author, date, score, image, featured, body)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               (category, tag, tag_class, headline, summary, author, date, score, image, featured, body, image_position)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 data.get("category", ""),
                 data.get("tag", ""),
@@ -692,6 +721,7 @@ def create_article(data: dict):
                 data.get("image", ""),
                 1 if data.get("featured") else 0,
                 data.get("body", ""),
+                data.get("image_position", "center center"),
             ),
         )
         conn.commit()
@@ -718,20 +748,21 @@ def update_article(article_id: int, data: dict):
         conn.execute(
             """UPDATE articles
                SET category=?, tag=?, tag_class=?, headline=?, summary=?,
-                   author=?, date=?, score=?, image=?, featured=?, body=?
+                   author=?, date=?, score=?, image=?, featured=?, body=?, image_position=?
                WHERE id=?""",
             (
-                data.get("category",  ex["category"]),
-                data.get("tag",       ex["tag"]),
-                data.get("tag_class", ex["tag_class"]),
-                data.get("headline",  ex["headline"]),
-                data.get("summary",   ex["summary"]),
-                data.get("author",    ex["author"]),
-                data.get("date",      ex["date"]),
-                data.get("score",     ex["score"]),
-                data.get("image",     ex["image"]),
+                data.get("category",       ex["category"]),
+                data.get("tag",            ex["tag"]),
+                data.get("tag_class",      ex["tag_class"]),
+                data.get("headline",       ex["headline"]),
+                data.get("summary",        ex["summary"]),
+                data.get("author",         ex["author"]),
+                data.get("date",           ex["date"]),
+                data.get("score",          ex["score"]),
+                data.get("image",          ex["image"]),
                 1 if data.get("featured", ex["featured"]) else 0,
-                data.get("body",      ex.get("body", "")),
+                data.get("body",           ex.get("body", "")),
+                data.get("image_position", ex.get("image_position", "center center")),
                 article_id,
             ),
         )

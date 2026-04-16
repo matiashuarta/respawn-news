@@ -13,7 +13,15 @@
       "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); ts=d.get\\('topics',[]\\); print\\(f'General: {len\\(ts\\)} topics'\\); [print\\(f'  [{\\\\\"P\\\\\" if t[\\\\\"pinned\\\\\"] else \\\\\" \\\\\"}] {t[\\\\\"title\\\\\"][:65]}'\\) for t in ts]\")",
       "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); ts=d.get\\('topics',[]\\); [print\\(f'  {t[\\\\\"title\\\\\"][:55]}'\\) for t in ts]; print\\(f'Total general topics: {len\\(ts\\)}'\\)\")",
       "Bash(mkdir -p .keys)",
-      "Bash(ssh-keygen -t ed25519 -C \"github-actions-deploy-respawn\" -f .keys/deploy_key -N \"\")"
+      "Bash(ssh-keygen -t ed25519 -C \"github-actions-deploy-respawn\" -f .keys/deploy_key -N \"\")",
+      "Bash(python -m pytest tests/ -v)",
+      "Bash(pip install:*)",
+      "Bash(python -m pytest backend/tests/ -v)",
+      "Bash(python -m py_compile backend/server.py)",
+      "Bash(python -m py_compile backend/db.py)",
+      "Bash(python -m py_compile backend/news_data.py)",
+      "Bash(findstr :8765)",
+      "Bash(taskkill /F /PID 21344)"
     ]
   }
 }

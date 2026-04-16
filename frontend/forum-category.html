@@ -185,10 +185,26 @@
     .btn-submit:hover { opacity: .88; }
     .btn-submit:disabled { opacity: .4; cursor: not-allowed; }
 
+    @media (max-width: 900px) {
+      .topics-toolbar { gap: .6rem; }
+      .sort-pills { flex-wrap: wrap; }
+      .modal-box { border-radius: 14px; padding: 1.4rem; }
+    }
     @media (max-width: 680px) {
       .cat-layout { padding: 1.2rem 1rem; }
       .topic-stats { display: none; }
       .cat-hero-banner { padding: 1.2rem 1rem; }
+      .cat-hero-inner { gap: .8rem; }
+      .cat-hero-icon { width: 48px; height: 48px; font-size: 1.4rem; }
+      .cat-hero-text h1 { font-size: 1.2rem; }
+    }
+    @media (max-width: 480px) {
+      .breadcrumb { padding: .6rem 1rem; }
+      .topics-toolbar { flex-direction: column; align-items: flex-start; }
+      .btn-new-topic { width: 100%; justify-content: center; }
+      .topic-row { padding: .75rem 1rem; }
+      .topic-icon { width: 32px; height: 32px; font-size: .8rem; }
+      .modal-box { padding: 1.1rem; }
     }
   </style>
 </head>
