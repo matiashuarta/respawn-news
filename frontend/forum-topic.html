@@ -239,9 +239,19 @@
       .post-author { width: 90px; }
     }
     @media (max-width: 560px) {
+      .breadcrumb { padding: .6rem 1rem; }
       .topic-layout { padding: 1rem; }
+      .topic-title { font-size: 1.2rem; }
       .post-author { display: none; }
       .topic-sidebar { grid-template-columns: 1fr; }
+      .reply-form-footer { flex-direction: column; align-items: flex-end; gap: .5rem; }
+      .btn-post-reply { width: 100%; text-align: center; }
+    }
+    @media (max-width: 420px) {
+      .topic-title { font-size: 1.05rem; }
+      .post-content { padding: .9rem; }
+      .post-content-header { flex-direction: column; align-items: flex-start; gap: .2rem; }
+      .reply-form-card { padding: 1rem; }
     }
   </style>
 </head>

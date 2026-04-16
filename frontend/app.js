@@ -2,7 +2,7 @@
  * app.js — Shared frontend utilities for RESPAWN News
  */
 
-const API_BASE = 'http://localhost:8765';
+const API_BASE = `${location.protocol}//${location.hostname}:8765`;
 
 // ── HTML escape helper ────────────────────────────────────────────────────────
 function escHtml(str) {
