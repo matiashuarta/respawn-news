@@ -1,0 +1,37 @@
+# Runs on every push to master or dev.
+# Scans news_data.py for any remaining placeholder Unsplash image URLs.
+# Fails the build if any are found — all article images should be real URLs.
+
+name: Check Image URLs
+
+on:
+  push:
+    branches: [master, dev]
+  pull_request:
+    branches: [master, dev]
+
+jobs:
+  check-images:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for placeholder Unsplash URLs
+        run: |
+          python - <<'EOF'
+          import re
+
+          with open("backend/news_data.py", encoding="utf-8") as f:
+              source = f.read()
+
+          matches = re.findall(r'https?://[^\s"\']+unsplash\.com[^\s"\']*', source)
+
+          if matches:
+              print(f"❌ Found {len(matches)} placeholder Unsplash URL(s) in news_data.py:")
+              for url in matches:
+                  print(f"  - {url}")
+              raise SystemExit(1)
+          else:
+              print(f"✅ No Unsplash placeholder URLs found. All image URLs look updated.")
+          EOF
